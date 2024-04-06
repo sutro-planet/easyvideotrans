@@ -1,0 +1,21 @@
+{
+    "proxy": "127.0.0.1:7890",
+    "video Id": "oUpsufyAJu8",
+    "work path": "d:\\document\\AI_Work\\video_to_zh\\High_Heels",
+    "download video": true,
+    "download fhd video": true,
+    "extract audio": true,
+    "audio remove": true,
+    "audio remove model path": "D:\\document\\AI_Work\\whisper\\program\\models\\baseline.pth",
+    "audio transcribe": true,
+    "audio transcribe model": "medium.en",
+    "srt merge": true,
+    "srt merge en to text": true,
+    "srt merge translate": true,
+    "srt merge zh to text": true,
+    "srt to voice srouce": true,
+    "GPT-SoVITS url": "",
+    "voice connect": true,
+    "audio zh transcribe": true,
+    "audio zh transcribe model": "medium"
+}
