@@ -1,14 +1,14 @@
 {
     "proxy": "127.0.0.1:7890",
-    "video Id": "oUpsufyAJu8",
-    "work path": "d:\\document\\AI_Work\\video_to_zh\\High_Heels",
+    "video Id": "eAOzRXJNPms",
+    "work path": "d:\\document\\AI_Work\\video\\Mowers",
     "download video": false,
     "download fhd video": false,
     "extract audio": false,
     "audio remove": false,
     "audio remove model path": "D:\\document\\AI_Work\\whisper\\program\\models\\baseline.pth",
     "audio transcribe": false,
-    "audio transcribe model": "medium.en",
+    "audio transcribe model": "base.en",
     "srt merge": false,
     "srt merge en to text": false,
     "srt merge translate": false,
@@ -17,5 +17,5 @@
     "GPT-SoVITS url": "",
     "voice connect": true,
     "audio zh transcribe": true,
-    "audio zh transcribe model": "large"
+    "audio zh transcribe model": "medium"
 }

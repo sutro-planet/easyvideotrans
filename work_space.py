@@ -59,7 +59,13 @@ def download_youtube_video(video_id, fileNameAndPath):
 def transcribe_audio(path, modelName="base.en", languate="en",srtFilePathAndName="VIDEO_FILENAME.srt"):
     model = stable_whisper.load_model(modelName) # Change this to your desired model
     print("Whisper model loaded.")
-    transcribe = model.transcribe(audio=path,  language=languate, suppress_silence=False, vad=True)
+
+    # 确保简体中文 
+    initial_prompt=None
+    if languate=="zh":
+        initial_prompt="简体"
+    
+    transcribe = model.transcribe(audio=path,  language=languate, suppress_silence=False, vad=True, suppress_ts_tokens=False, temperature=0, initial_prompt=initial_prompt)
     print("Transcription complete.")
 
     transcribe.to_srt_vtt(srtFilePathAndName, word_level=False)
