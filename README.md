@@ -25,7 +25,7 @@ pip install -r requirements.txt
 ``
 
 pytorch安装  
-在[点击这里](https://pytorch.org/get-started/locally/)，选择合适的安装版本，**必须要选择gpu版！！！！** 原因是作者偷懒没有做gpu方案。
+在[点击这里](https://pytorch.org/get-started/locally/)，选择合适的安装版本，**必须要选择gpu版！！！！** 原因是作者偷懒没有做cpu方案，其实如果你愿意，改几行源码实现在CPU上跑应该也不难。
 
 其他依赖  
 因为本项目依赖[whisper](https://github.com/openai/whisper)，所以下载模型的时候国内可能会比较慢，可自行寻找解决方案whisper
