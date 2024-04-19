@@ -356,14 +356,19 @@ def voiceConnect(sourceDir, outputAndPath):
             audioNextPosition = voiceMapSrt[i+1].start.total_seconds() * 1000
             if audioNextPosition < audioEndPosition:
                 speedUp = (audio.duration_seconds * 1000 + MIN_GAP_DURATION *1000) / (audioNextPosition - audioPosition)
+                seconds = audioPosition / 1000.0
+                timeStr = str(datetime.timedelta(seconds=seconds))
                 if speedUp > MAX_SPEED_UP:
-                    logFile.write(f"Warning: The audio {i} , at {audioPosition} , is too short, speed up is {speedUp}.")
-                    print(f"Warning: The audio {i} , at {audioPosition} , is too short, speed up  is {speedUp}.")
+                    # 转换为 HH:MM:SS 格式
+                    logStr = f"Warning: The audio {i+1} , at {timeStr} , is too short, speed up is {speedUp}."
+                    logFile.write(logStr)
+                    print(logStr)
                 
                 # 音频如果提速一个略大于1，则speedup函数可能会出现一个错误的音频，所以这里确定最小的speedup为1.01
                 if speedUp < 1.05:
-                    logFile.write(f"Warning: The audio {i}, speed up {speedUp} is too near to 1.0, change to 1.05.")
-                    print(f"Warning: The audio {i}, speed up {speedUp} is too near to 1.0, change to 1.05.")
+                    logStr = f"Warning: The audio {i+1} , at {timeStr} , speed up is {speedUp}."
+                    logFile.write(logStr)
+                    print(logStr)
                     speedUp = 1.05
                 audio = audio.speedup(playback_speed=speedUp)
 
