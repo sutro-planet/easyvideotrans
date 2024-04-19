@@ -1,9 +1,11 @@
+from audio_remove import audio_remove
+from warning_file import WarningFile
+
 import os
 import copy
 import json
 from pytube import YouTube
 from pytube.cli import on_progress
-from audio_remove import audio_remove
 import stable_whisper
 import srt
 import re
@@ -314,6 +316,9 @@ def srtToVoiceEdge(srtFileNameAndPath, outputDir):
     return True
 
 def voiceConnect(sourceDir, outputAndPath):
+    MAX_SPEED_UP = 1.2  # 最大音频加速
+    MIN_GAP_DURATION = 0.1  # 最小间隔时间，单位秒。低于这个间隔时间就认为音频重叠了
+
     if not os.path.exists(sourceDir):
         return False
     
@@ -326,19 +331,44 @@ def voiceConnect(sourceDir, outputAndPath):
     with open(srtMapFileAndPath, "r", encoding="utf-8") as f:
         voiceMapSrtContent = f.read()
 
+    logFileNameAndPath = outputAndPath + ".log"
+    logFile = WarningFile(logFileNameAndPath)
+
+    # 确定音频长度
     voiceMapSrt = list(srt.parse(voiceMapSrtContent))
-    # audioConnectInfoList = []
     duration = voiceMapSrt[-1].end.total_seconds() * 1000
+    finalAudioFileAndPath = os.path.join(sourceDir, voiceMapSrt[-1].content)
+    finalAudioEnd = voiceMapSrt[-1].start.total_seconds() * 1000
+    finalAudioEnd += AudioSegment.from_wav(finalAudioFileAndPath).duration_seconds
+    duration = max(duration, finalAudioEnd)
+
+    # 初始化一个空的音频段
     combined = AudioSegment.silent(duration=duration)
     for i in range(len(voiceMapSrt)):
         audioFileAndPath = os.path.join(sourceDir, voiceMapSrt[i].content)
-        audioPosition = voiceMapSrt[i].start.total_seconds() * 1000
         audio = AudioSegment.from_wav(audioFileAndPath)
+        audio = audio.strip_silence(silence_thresh=-40, silence_len=100) # 去除头尾的静音
+        audioPosition = voiceMapSrt[i].start.total_seconds() * 1000
+
+        if i != len(voiceMapSrt) - 1:
+            # 检查上这一句的结尾到下一句的开头之间是否有静音，如果没有则需要缩小音频
+            audioEndPosition = audioPosition + audio.duration_seconds * 1000 + MIN_GAP_DURATION *1000
+            audioNextPosition = voiceMapSrt[i+1].start.total_seconds() * 1000
+            if audioNextPosition < audioEndPosition:
+                speedUp = (audio.duration_seconds * 1000 + MIN_GAP_DURATION *1000) / (audioNextPosition - audioPosition)
+                if speedUp > MAX_SPEED_UP:
+                    logFile.write(f"Warning: The audio {i} , at {audioPosition} , is too short, speed up is {speedUp}.")
+                    print(f"Warning: The audio {i} , at {audioPosition} , is too short, speed up  is {speedUp}.")
+                
+                # 音频如果提速一个略大于1，则speedup函数可能会出现一个错误的音频，所以这里确定最小的speedup为1.01
+                if speedUp < 1.05:
+                    logFile.write(f"Warning: The audio {i}, speed up {speedUp} is too near to 1.0, change to 1.05.")
+                    print(f"Warning: The audio {i}, speed up {speedUp} is too near to 1.0, change to 1.05.")
+                    speedUp = 1.05
+                audio = audio.speedup(playback_speed=speedUp)
+
         combined = combined.overlay(audio, position=audioPosition)
-        # audioConnectInfo = (os.path.join(sourceDir, voiceMapSrt[i].content), voiceMapSrt[i].start.total_seconds() * 1000)
-        # audioConnectInfoList.append(audioConnectInfo)
     
-    # 初始化一个空的音频段
     combined.export(outputAndPath, format="wav")
     return True
 
