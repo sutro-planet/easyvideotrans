@@ -18,6 +18,8 @@ import edge_tts
 from concurrent.futures import ThreadPoolExecutor
 import datetime
 from moviepy.editor import VideoFileClip
+import sys
+import traceback
 
 PROXY = "127.0.0.1:7890"
 proxies = None
@@ -45,6 +47,7 @@ paramDictTemplate = {
     "audio zh transcribe model": "medium" # 中文语音转文字模型名称
 }
 diagnosisLog = None
+executeLog = None
 
 def create_param_template(path):
     with open(path, "w", encoding="utf-8") as file:
@@ -77,13 +80,15 @@ def transcribe_audio(path, modelName="base.en", languate="en",srtFilePathAndName
     return True
 
 def srtSentanceMerge(sourceSrtFilePathAndName, OutputSrtFilePathAndName):
-    srtContent = open(sourceSrtFilePathAndName, "r").read()
+    srtContent = open(sourceSrtFilePathAndName, "r", encoding="utf-8").read()
     subGenerator = srt.parse(srtContent)
     subList = list(subGenerator)
     if len(subList) == 0:
         print("No subtitle found.")
         return False
     
+    diagnosisLog.write("\n<Sentence Merge Section>")
+
     subPorcessingIndex = 1
     subItemList = []
     subItemProcessing = None
@@ -95,11 +100,10 @@ def srtSentanceMerge(sourceSrtFilePathAndName, OutputSrtFilePathAndName):
 
         # 异常情况，句号居然在中间
         if endSentenceIndex != -1 and endSentenceIndex != len(subItem.content) - 1:
-            print("Warning!! Sentence not end at the end of the subtitle.")
-            print("Index: " + str(endSentenceIndex))
-            print("Content: " + subItem.content)
-            print(subItem)
-            print("")
+            logString = f"Warning: Sentence (index:{endSentenceIndex}) not end at the end of the subtitle.\n"
+            logString += f"Content: {subItem.content}"
+            diagnosisLog.write(logString)
+            print(logString)
     
         # 以后一个字幕，直接拼接送入就可以了
         if subItem == subList[-1]:
@@ -128,6 +132,7 @@ def srtSentanceMerge(sourceSrtFilePathAndName, OutputSrtFilePathAndName):
             subPorcessingIndex += 1
 
     srtContent = srt.compose(subItemList)
+    # 如果打开错误则返回false
     with open(OutputSrtFilePathAndName, "w") as file:
         file.write(srtContent)
 
@@ -341,7 +346,7 @@ def voiceConnect(sourceDir, outputAndPath):
     finalAudioEnd += AudioSegment.from_wav(finalAudioFileAndPath).duration_seconds
     duration = max(duration, finalAudioEnd)
 
-    diagnosisLog.write("\n<voice connect section>")
+    diagnosisLog.write("\n<Voice connect section>")
 
     # 初始化一个空的音频段
     combined = AudioSegment.silent(duration=duration)
@@ -386,9 +391,6 @@ if __name__ == "__main__":
         print("Please edit the file and run the script again.")
         exit(0)
     
-    # 打印当前系统时间
-    print("Start at: " + str(datetime.datetime.now()))
-    
     paramDict = load_param(paramDirPathAndName)
     workPath = paramDict["work path"]
     videoId = paramDict["video Id"]
@@ -406,10 +408,17 @@ if __name__ == "__main__":
         os.makedirs(workPath)
         print(f"Directory {workPath} created.")
     
-    # 诊断日志
+    # 日志
     logFileName = "diagnosis.log"
-    logFileNameAndPath = os.path.join(workPath, logFileName)
-    diagnosisLog = WarningFile(logFileNameAndPath)
+    diagnosisLog = WarningFile(os.path.join(workPath, logFileName))
+    # 执行日志文件的格式为excute_yyyyMMdd_HHmmss.log
+    logFileName = "execute_" + datetime.datetime.now().strftime("%Y%m%d_%H%M%S") + ".log"
+    executeLog = WarningFile(os.path.join(workPath, logFileName))
+
+    nowString = str(datetime.datetime.now())
+    executeLog.write(f"Start at: {nowString}")
+    executeLog.write("Params\n" + json.dumps(paramDict, indent=4) + "\n")
+    print(f"Start at: {nowString}")
 
     # 下载视频
     voiceFileName = f"{videoId}.mp4"
@@ -417,13 +426,25 @@ if __name__ == "__main__":
     
     if paramDict["download video"]:
         print(f"Downloading video {videoId} to {viedoFileNameAndPath}")
-        yt = YouTube(f'https://www.youtube.com/watch?v={videoId}', proxies=proxies, on_progress_callback=on_progress)
-        video  = yt.streams.filter(progressive=True).last()
-        video.download(output_path=workPath, filename=voiceFileName)
-        # go back to the script directory
-        print("Download complete.")
+        try:
+            yt = YouTube(f'https://www.youtube.com/watch?v={videoId}', proxies=proxies, on_progress_callback=on_progress)
+            video  = yt.streams.filter(progressive=True).last()
+            video.download(output_path=workPath, filename=voiceFileName)
+            # go back to the script directory
+            print("Download complete.")
+            executeLog.write(f"[WORK o] Download video {videoId} to {viedoFileNameAndPath} successfully.")
+        except Exception as e:
+            logStr = f"[WORK x] Error: Program blocked while downloading video {videoId} to {viedoFileNameAndPath}."
+            print(logStr)
+            executeLog.write(logStr)
+            error_str = traceback.format_exception_only(type(e), e)[-1].strip()
+            print(error_str)
+            executeLog.write(error_str)
+            sys.exit(-1)
     else:
-        print("Skip downloading video.")
+        logStr = "[WORK -] Skip downloading video."
+        print(logStr)
+        executeLog.write(logStr)
 
     
     # try download 1080p video
@@ -436,10 +457,19 @@ if __name__ == "__main__":
             yt = YouTube(f'https://www.youtube.com/watch?v={videoId}', proxies=proxies, on_progress_callback=on_progress)
             video  = yt.streams.filter(res="1080p").first()
             video.download(output_path=workPath, filename=voiceFhdFileName)
+            print("Download 1080p video complete.")
+            executeLog.write(f"[WORK o] Download 1080p video {videoId} to {voiceFhdFileNameAndPath} successfully.")
         except:
-            print(f"Failed to download 1080p video {videoId} to {voiceFhdFileNameAndPath}")
+            logStr = f"[WORK x] Error: Program blocked while downloading 1080p video {videoId} to {voiceFhdFileNameAndPath}."
+            print(logStr)
+            executeLog.write(logStr)
+            logStr = f"Program will not exit for that the error is not critical."
+            print(logStr)
+            executeLog.write(logStr)
     else:
-        print("Skip downloading 1080p video.")
+        logStr = "[WORK -] Skip downloading 1080p video."
+        print(logStr)
+        executeLog.write(logStr)
 
     # 打印当前系统时间
     print("Now at: " + str(datetime.datetime.now()))
@@ -450,12 +480,24 @@ if __name__ == "__main__":
     if paramDict["extract audio"]:
         # remove the audio file if it exists
         print(f"Extracting audio from {viedoFileNameAndPath} to {audioFileNameAndPath}")
-        video = VideoFileClip(viedoFileNameAndPath)
-        audio = video.audio
-        audio.write_audiofile(audioFileNameAndPath)
-        print("Audio extraction complete.")
+        try:
+            video = VideoFileClip(viedoFileNameAndPath)
+            audio = video.audio
+            audio.write_audiofile(audioFileNameAndPath)
+            print("Audio extraction complete.")
+            executeLog.write(f"[WORK o] Extract audio from {viedoFileNameAndPath} to {audioFileNameAndPath} successfully.")
+        except Exception as e:
+            logStr = f"[WORK x] Error: Program blocked while extracting audio from {viedoFileNameAndPath} to {audioFileNameAndPath}."
+            print(logStr)
+            executeLog.write(logStr)
+            error_str = traceback.format_exception_only(type(e), e)[-1].strip()
+            print(error_str)
+            executeLog.write(error_str)
+            sys.exit(-1)
     else:
-        print("Skip extracting audio.")
+        logStr = "[WORK -] Skip extracting audio."
+        print(logStr)
+        executeLog.write(logStr)
     
     # 去除音频中的音乐
     voiceName = videoId + "_voice.wav"
@@ -464,64 +506,143 @@ if __name__ == "__main__":
     insturmentNameAndPath = os.path.join(workPath, insturmentName)
     if paramDict["audio remove"]:
         print(f"Removing music from {audioFileNameAndPath} to {voiceNameAndPath} and {insturmentNameAndPath}")
-        audio_remove(audioFileNameAndPath, voiceNameAndPath, insturmentNameAndPath, audioRemoveModelNameAndPath)
-        print("Music removal complete.")
+        try:
+            audio_remove(audioFileNameAndPath, voiceNameAndPath, insturmentNameAndPath, audioRemoveModelNameAndPath)
+            print("Music removal complete.")
+            executeLog.write(f"[WORK o] Remove music from {audioFileNameAndPath} to {voiceNameAndPath} and {insturmentNameAndPath} successfully.")
+        except Exception as e:
+            logStr = f"[WORK x] Error: Program blocked while removing music from {audioFileNameAndPath} to {voiceNameAndPath} and {insturmentNameAndPath}."
+            print(logStr)
+            executeLog.write(logStr)
+            error_str = traceback.format_exception_only(type(e), e)[-1].strip()
+            print(error_str)
+            executeLog.write(error_str)
+            sys.exit(-1)
     else:
-        print("Skip removing music.")
+        logStr = "[WORK -] Skip removing music."
+        print(logStr)
+        executeLog.write(logStr)
         
     # 语音转文字
     srtEnFileName = videoId + "_en.srt"
     srtEnFileNameAndPath = os.path.join(workPath, srtEnFileName)
     if paramDict["audio transcribe"]:
-        print(f"Transcribing audio from {voiceNameAndPath} to {srtEnFileNameAndPath}")
-        transcribe_audio(voiceNameAndPath, paramDict["audio transcribe model"], "en", srtEnFileNameAndPath)
-        print("Transcription complete.")
+        try:
+            print(f"Transcribing audio from {voiceNameAndPath} to {srtEnFileNameAndPath}")
+            transcribe_audio(voiceNameAndPath, paramDict["audio transcribe model"], "en", srtEnFileNameAndPath)
+            print("Transcription complete.")
+            executeLog.write(f"[WORK o] Transcribe audio from {voiceNameAndPath} to {srtEnFileNameAndPath} successfully.")
+        except Exception as e:
+            logStr = f"[WORK x] Error: Program blocked while transcribing audio from {voiceNameAndPath} to {srtEnFileNameAndPath}."
+            print(logStr)
+            executeLog.write(logStr)
+            error_str = traceback.format_exception_only(type(e), e)[-1].strip()
+            print(error_str)
+            executeLog.write(error_str)
+            sys.exit(-1)
     else:
-        print("Skip transcription.")
+        logStr = "[WORK -] Skip transcription."
+        print(logStr)
+        executeLog.write(logStr)
 
     # 字幕语句合并
     srtEnFileNameMerge = videoId + "_en_merge.srt"
     srtEnFileNameMergeAndPath = os.path.join(workPath, srtEnFileNameMerge)
     if paramDict["srt merge"]:
-        print(f"Merging sentences in {srtEnFileNameAndPath} to {srtEnFileNameMergeAndPath}")
-        srtSentanceMerge(srtEnFileNameAndPath, srtEnFileNameMergeAndPath)
-        print("Sentence merge complete.")
+        try:
+            print(f"Merging sentences in {srtEnFileNameAndPath} to {srtEnFileNameMergeAndPath}")
+            srtSentanceMerge(srtEnFileNameAndPath, srtEnFileNameMergeAndPath)
+            print("Sentence merge complete.")
+            executeLog.write(f"[WORK o] Merge sentences in {srtEnFileNameAndPath} to {srtEnFileNameMergeAndPath} successfully.")
+        except Exception as e:
+            logStr = f"[WORK x] Error: Program blocked while merging sentences in {srtEnFileNameAndPath} to {srtEnFileNameMergeAndPath}."
+            print(logStr)
+            executeLog.write(logStr)
+            error_str = traceback.format_exception_only(type(e), e)[-1].strip()
+            print(error_str)
+            executeLog.write(error_str)
+            sys.exit(-1)
     else:
-        print("Skip sentence merge.")
+        logStr = "[WORK -] Skip sentence merge."
+        print(logStr)
+        executeLog.write(logStr)
 
     # 英文字幕转文字
     tetEnFileName = videoId + "_en_merge.txt"
     tetEnFileNameAndPath = os.path.join(workPath, tetEnFileName)
     if paramDict["srt merge en to text"]:
-        enText = srt_to_text(srtEnFileNameMergeAndPath)
-        print(f"Writing EN text to {tetEnFileNameAndPath}")
-        with open(tetEnFileNameAndPath, "w") as file:
-            file.write(enText)
-        print("Text file created.")
+        try:
+            enText = srt_to_text(srtEnFileNameMergeAndPath)
+            print(f"Writing EN text to {tetEnFileNameAndPath}")
+            with open(tetEnFileNameAndPath, "w") as file:
+                file.write(enText)
+            print("Text file created.")
+            executeLog.write(f"[WORK o] Write EN text to {tetEnFileNameAndPath} successfully.")
+        except Exception as e:
+            logStr = f"[WORK x] Error: Writing EN text to {tetEnFileNameAndPath} failed."
+            print(logStr)
+            executeLog.write(logStr)
+            error_str = traceback.format_exception_only(type(e), e)[-1].strip()
+            print(error_str)
+            executeLog.write(error_str)
+            # 这不是关键步骤，所以不退出程序
+            logStr = f"Program will not exit for that the error is not critical."
+            print(logStr)
+            executeLog.write(logStr)
     else:
-        print("Skip writing EN text.")
+        logStr = "[WORK -] Skip writing EN text."
+        print(logStr)
+        executeLog.write(logStr)
 
     # 字幕翻译
     srtZhFileName = videoId + "_zh_merge.srt"
     srtZhFileNameAndPath = os.path.join(workPath, srtZhFileName)
     if paramDict["srt merge translate"]:
-        print(f"Translating subtitle from {srtEnFileNameMergeAndPath} to {srtZhFileNameAndPath}")
-        srtFileTran(srtEnFileNameMergeAndPath, srtZhFileNameAndPath)
-        print("Subtitle translation complete.")
+        try:
+            print(f"Translating subtitle from {srtEnFileNameMergeAndPath} to {srtZhFileNameAndPath}")
+            srtFileTran(srtEnFileNameMergeAndPath, srtZhFileNameAndPath)
+            print("Subtitle translation complete.")
+            executeLog.write(f"[WORK o] Translate subtitle from {srtEnFileNameMergeAndPath} to {srtZhFileNameAndPath} successfully.")
+        except Exception as e:
+            logStr = f"[WORK x] Error: Program blocked while translating subtitle from {srtEnFileNameMergeAndPath} to {srtZhFileNameAndPath}."
+            print(logStr)
+            executeLog.write(logStr)
+            error_str = traceback.format_exception_only(type(e), e)[-1].strip()
+            print(error_str)
+            executeLog.write(error_str)
+            sys.exit(-1)
     else:
-        print("Skip subtitle translation.")
+        logStr = "[WORK -] Skip subtitle translation."
+        print(logStr)
+        executeLog.write(logStr)
 
     # 中文字幕转文字
     textZhFileName = videoId + "_zh_merge.txt"
     textZhFileNameAndPath = os.path.join(workPath, textZhFileName)
     if paramDict["srt merge zh to text"]:
-        zhText = srt_to_text(srtZhFileNameAndPath)
-        print(f"Writing ZH text to {textZhFileNameAndPath}")
-        with open(textZhFileNameAndPath, "w", encoding="utf-8") as file:
-            file.write(zhText)
-        print("Text file created.")
+        try:
+            zhText = srt_to_text(srtZhFileNameAndPath)
+            print(f"Writing ZH text to {textZhFileNameAndPath}")
+            with open(textZhFileNameAndPath, "w", encoding="utf-8") as file:
+                file.write(zhText)
+            print("Text Zh file created.")
+            executeLog.write(f"[WORK o] Write ZH text to {textZhFileNameAndPath} successfully.")
+        except Exception as e:
+            logStr = f"[WORK x] Error: Writing ZH text to {textZhFileNameAndPath} failed."
+            print(logStr)
+            executeLog.write(logStr)
+            error_str = traceback.format_exception_only(type(e), e)[-1].strip()
+            print(error_str)
+            executeLog.write(error_str)
+            # 这不是关键步骤，所以不退出程序
+            # 这不是关键步骤，所以不退出程序
+            logStr = f"Program will not exit for that the error is not critical."
+            print(logStr)
+            executeLog.write(logStr)
     else:
-        print("Skip writing ZH text.")
+        logStr = "[WORK -] Skip writing ZH text."
+        print(logStr)
+        executeLog.write(logStr)
 
     # 字幕转语音
     voiceUrl = paramDict["GPT-SoVITS url"]
@@ -531,38 +652,81 @@ if __name__ == "__main__":
     voiceSrcMapName = "voiceMap.srt"
     voiceSrcMapNameAndPath = os.path.join(voiceDir, voiceSrcMapName)
     if paramDict["srt to voice srouce"]:
-        if voiceUrl == "":
-            print(f"Converting subtitle to voice by EdgeTTS in {srtZhFileNameAndPath} to {voiceDir}")
-            srtToVoiceEdge(srtZhFileNameAndPath, voiceDir)
-        else:
-            print(f"Converting subtitle to voice by GPT-SoVITS  in {srtZhFileNameAndPath} to {voiceDir}")
-            srtToVoice(voiceUrl, srtZhFileNameAndPath, voiceDir)
-        print("Voice conversion complete.")
+        try:
+            if voiceUrl == "":
+                print(f"Converting subtitle to voice by EdgeTTS in {srtZhFileNameAndPath} to {voiceDir}")
+                srtToVoiceEdge(srtZhFileNameAndPath, voiceDir)
+            else:
+                print(f"Converting subtitle to voice by GPT-SoVITS  in {srtZhFileNameAndPath} to {voiceDir}")
+                srtToVoice(voiceUrl, srtZhFileNameAndPath, voiceDir)
+            print("Voice conversion complete.")
+            executeLog.write(f"[WORK o] Convert subtitle to voice in {srtZhFileNameAndPath} to {voiceDir} successfully.")
+        except Exception as e:
+            logStr = f"[WORK x] Error: Program blocked while converting subtitle to voice in {srtZhFileNameAndPath} to {voiceDir}."
+            print(logStr)
+            executeLog.write(logStr)
+            error_str = traceback.format_exception_only(type(e), e)[-1].strip()
+            print(error_str)
+            executeLog.write(error_str)
+            sys.exit(-1)
     else:
-        print("Skip voice conversion.")
+        logStr = "[WORK -] Skip voice conversion."
+        print(logStr)
+        executeLog.write(logStr)
     
     # 语音合并
     voiceConnectedName = videoId + "_zh.wav"
     voiceConnectedNameAndPath = os.path.join(workPath, voiceConnectedName)
     if paramDict["voice connect"]:
-        print(f"Connecting voice in {voiceDir} to {voiceConnectedNameAndPath}")
-        voiceConnect(voiceDir, voiceConnectedNameAndPath)
-        print("Voice connection complete.")
+        try:
+            print(f"Connecting voice in {voiceDir} to {voiceConnectedNameAndPath}")
+            ret = voiceConnect(voiceDir, voiceConnectedNameAndPath)
+            if ret == True:
+                print("Voice connection complete.")
+                executeLog.write(f"[WORK o] Connect voice in {voiceDir} to {voiceConnectedNameAndPath} successfully.")
+            else:
+                print("Voice connection failed.")
+                executeLog.write(f"[WORK x] Connect voice in {voiceDir} to {voiceConnectedNameAndPath} failed.")
+                sys.exit(-1)
+        except Exception as e:
+            logStr = f"[WORK x] Error: Program blocked while connecting voice in {voiceDir} to {voiceConnectedNameAndPath}."
+            print(logStr)
+            executeLog.write(logStr)
+            error_str = traceback.format_exception_only(type(e), e)[-1].strip()
+            print(error_str)
+            executeLog.write(error_str)
+            sys.exit(-1)
     else:
-        print("Skip voice connection.")
+        logStr = "[WORK -] Skip voice connection."
+        print(logStr)
+        executeLog.write(logStr)
     
     # 合成后的语音转文字
     srtVoiceFileName = videoId + "_zh.srt"
     srtVoiceFileNameAndPath = os.path.join(workPath, srtVoiceFileName)
     if paramDict["audio zh transcribe"]:
-        print(f"Transcribing audio from {voiceConnectedNameAndPath} to {srtVoiceFileNameAndPath}")
-        transcribe_audio(voiceConnectedNameAndPath, paramDict["audio zh transcribe model"] ,"zh", srtVoiceFileNameAndPath)
-        print("Transcription complete.")
+        try:
+            print(f"Transcribing audio from {voiceConnectedNameAndPath} to {srtVoiceFileNameAndPath}")
+            transcribe_audio(voiceConnectedNameAndPath, paramDict["audio zh transcribe model"] ,"zh", srtVoiceFileNameAndPath)
+            print("Transcription complete.")
+            executeLog.write(f"[WORK o] Transcribe audio from {voiceConnectedNameAndPath} to {srtVoiceFileNameAndPath} successfully.")
+        except Exception as e:
+            logStr = f"[WORK x] Error: Program blocked while transcribing audio from {voiceConnectedNameAndPath} to {srtVoiceFileNameAndPath}."
+            print(logStr)
+            executeLog.write(logStr)
+            error_str = traceback.format_exception_only(type(e), e)[-1].strip()
+            print(error_str)
+            executeLog.write(error_str)
+            sys.exit(-1)
     else:
-        print("Skip transcription.")
+        logStr = "[WORK -] Skip transcription."
+        print(logStr)
+        executeLog.write(logStr)
+
 
     print("All done.")
     print("dir: " + workPath)
+    executeLog.write("All done!!")
     
 
     

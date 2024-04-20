@@ -142,7 +142,6 @@ def audio_remove(audioFileNameAndPath, voiceFileNameAndPath, instrumentFileNameA
     )
 
     y_spec, v_spec = sp.separate_tta(X_spec)
-    # y_spec, v_spec = sp.separate(X_spec)
     print('inverse stft of instruments...', end=' ')
     wave = spec_utils.spectrogram_to_wave(y_spec, AUDIO_REMOVE_HOP_SIZE)
     print('done')
