@@ -150,7 +150,7 @@ def srt_to_text(srt_path):
             continue
         if line == "":
             continue
-        if re.search('\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}', line):
+        if re.search('\\d{2}:\\d{2}:\\d{2},\\d{3} --> \\d{2}:\\d{2}:\\d{2},\\d{3}', line):
             continue
         text += line + '\n'
     return text
