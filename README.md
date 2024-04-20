@@ -202,3 +202,14 @@ models目录下提供了一个基本可用的模型baseline.pth
  - [GPT-SoVITS](https://github.com/RVC-Boss/GPT-SoVITS)
  - [moviepy](https://github.com/Zulko/moviepy)
 
+
+# 网页版开发 (施工中)
+
+跑Flask服务器
+
+```
+flask run --host=0.0.0.0 --debug
+```
+
+然后浏览器打开http://127.0.0.1:5000.
+

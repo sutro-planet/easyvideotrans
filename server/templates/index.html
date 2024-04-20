@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pytvzhen Downloader</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+    <h1>使用ID下载Youtube视频</h1>
+    <form action="/yt_download" method="post" id="downloadForm">
+        <label for="video_id">Enter YouTube Video ID:</label><br>
+        <input type="text" id="video_id" name="video_id"><br>
+        <input type="submit" value="Download">
+        <a id="downloadButton" class="btn btn-primary" role="button" style="display: none;">Download Video</a>
+    </form>
+
+    <p id="serverResponse"></p>
+    <script>
+        $(document).ready(function(){
+            $("#downloadForm").submit(function(e){
+                e.preventDefault();
+                $.ajax({
+                    url: '/yt_download',
+                    type: 'post',
+                    contentType: 'application/json',
+                    data: JSON.stringify({"video_id": $("#video_id").val()}),
+                    success: function(response) {
+                        $("#serverResponse").text(response.message);
+                        $("#downloadButton").attr('href', '/yt/' + response.video_id);
+                        $("#downloadButton").show();
+                    },
+                    error: function(response) {
+                        $("#downloadButton").hide();
+                        $("#serverResponse").text(response.responseJSON.message);
+                    }
+                });
+            });
+        });
+        </script>
+</body>
+</html>
