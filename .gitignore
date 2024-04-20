@@ -1,7 +1,6 @@
 *.pyc
 *.npy
 *.npz
-*.pth
 *.log
 
 *.jpg
@@ -18,3 +17,4 @@
 venv/
 
 __pycache__
+work
