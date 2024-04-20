@@ -32,12 +32,13 @@ pytorch安装
 
 # 快速使用
 由于作者偷懒，根本没有做什么易用性，所以这个快速使用也不会有多快。  
-1. 找到example里面的paramDict.json，文件拷出来准备作为参数输入。
-2. "proxy"选择为自己的代理ip+端口
+1. 找到example里面的paramDict.json，拷贝一份。
+2. "proxy"选择为自己的代理ip+端口，没有的话就留空。
 3. "video Id"选择为油管视频id。
 4. "work path"工作目录
 5. "audio remove model path"选择去背景音模型。models目录下提供了一个基本可用的模型baseline.pth
-6. `python work_space.py`运行脚本，并输入你刚刚修改的脚本
+6. (可选)将"srt merge translate tool"指定为deepl，并在"srt merge translate key"中输入deepl的api key。强烈推荐！！deepl的翻译准确度很高，可以为你节省很多时间。
+7. `python work_space.py`运行脚本，并输入你刚刚修改的脚本
 
 # 流程说明
 本项目流程串行执行后面的流程，依赖前面流程输出的文件。通过配置输入的Json文件，可以开关相应的流程。
@@ -83,7 +84,7 @@ pytorch安装
 - 输入文件：[video id]_voice.wav 
 - 输出文件：[video id]_en.srt
 
-使用stable-ts(whisper的一个改进)将英文语音转换为字幕文件。这里选择的模型实际上是whisper的模型名称，可选"tiny.en"，"tiny"，"base.en"，"base"，"small.en"，"small"，"medium.en"，"medium"，"large"，"large-v2"，"large-v3"。  需要说明的是点en结尾的为纯英文模型，只能识别英文，这类模型在英语转字幕中具有优势。如果不差显存不差时间，推荐"medium.en"。
+使用stable-ts(whisper的一个改进)将英文语音转换为字幕文件。这里选择的模型实际上是whisper的模型名称，可选"tiny.en"，"tiny"，"base.en"，"base"，"small.en"，"small"，"medium.en"，"medium"，"large"，"large-v2"，"large-v3"。  需要说明的是点en结尾的为纯英文模型，只能识别英文，这类模型在英语转字幕中具有优势。如果不差显存不差时间，推荐"medium.en"。英文推荐使用"base.en"，中文推荐使用"medium"。大于"base.en"的英文模型可能会出现无法识别部分英文的问题。
 
 ### 英文字幕合并
 - 流程开关："srt merge"
@@ -103,11 +104,11 @@ pytorch安装
 
 ### 字幕翻译
 - 流程开关："srt merge translate"
-- 依赖参数："proxy"  
+- 依赖参数："proxy"，"srt merge translate tool"，"srt merge translate key"
 - 输入文件：[video id]_en_merge.srt
 - 输出文件：[video id]_zh_merge.srt
 
-将字幕文件送给谷歌进行翻译。至于为什么不选其他的翻译软件？我试过了效果都不好。这一步骤生成的文件特别重要，不出意外，你校对完成之后修改的就是[video id]_zh_merge.srt，然后从[video id]_zh_merge.srt步开始重新生成语音的。
+将字幕文件送给谷歌或者Deepl进行翻译，取决于"srt merge translate tool"。至于为什么不选其他的翻译软件？我试过了效果都不好。强烈推荐Deepl！！！虽然Deepl需要"srt merge translate key"，但是准确率高，可以减少人工介入。这一步骤生成的文件特别重要，不出意外，你校对完成之后修改的就是[video id]_zh_merge.srt，然后从[video id]_zh_merge.srt步开始重新生成语音的。
 
 ### 中文合并字幕转文字
 - 流程开关："srt merge zh to text"
@@ -158,6 +159,8 @@ paramDictTemplate = {
     "srt merge": True, # [工作流程开关]字幕合并
     "srt merge en to text": True, # [工作流程开关]英文字幕转文字
     "srt merge translate": True, # [工作流程开关]字幕翻译
+    "srt merge translate tool": "google", # 翻译工具，目前支持google和deepl
+    "srt merge translate key": "", # 翻译工具的key
     "srt merge zh to text": True, # [工作流程开关]中文字幕转文字
     "srt to voice srouce": True, # [工作流程开关]字幕转语音
     "GPT-SoVITS url": "", # 不填写就是用edgeTTS，填写则为GPT-SoVITS 服务地址。建议不要用GPT-SoVITS

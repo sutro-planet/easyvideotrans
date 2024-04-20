@@ -1,7 +1,6 @@
 *.pyc
 *.npy
 *.npz
-*.pth
 *.log
 
 *.jpg

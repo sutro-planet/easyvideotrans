@@ -1,4 +1,4 @@
-from audio_remove import audio_remove
+from tools.audio_remove import audio_remove
 from warning_file import WarningFile
 
 import os
@@ -20,6 +20,7 @@ import datetime
 from moviepy.editor import VideoFileClip
 import sys
 import traceback
+import deepl
 
 PROXY = "127.0.0.1:7890"
 proxies = None
@@ -39,6 +40,8 @@ paramDictTemplate = {
     "srt merge": True, # [工作流程开关]字幕合并
     "srt merge en to text": True, # [工作流程开关]英文字幕转文字
     "srt merge translate": True, # [工作流程开关]字幕翻译
+    "srt merge translate tool": "google", # 翻译工具，目前支持google和deepl
+    "srt merge translate key": "", # 翻译工具的key
     "srt merge zh to text": True, # [工作流程开关]中文字幕转文字
     "srt to voice srouce": True, # [工作流程开关]字幕转语音
     "GPT-SoVITS url": "", # 不填写就是用edgeTTS，填写则为GPT-SoVITS 服务地址。简易不要用GPT-SoVITS
@@ -152,20 +155,30 @@ def srt_to_text(srt_path):
         text += line + '\n'
     return text
 
-def trans(texts):
+def googleTrans(texts):
     if PROXY == "":
         client = Translate()
     else:
         client = Translate(proxies={'https': proxies['https']})
-        # client = Translate(proxies={'https': PROXY})
     textsResponse = client.translate(texts, target='zh')
     textsTranslated = []
     for txtResponse in textsResponse:
         textsTranslated.append(txtResponse.translatedText)
     return textsTranslated
 
+def deeplTranslate(texts, key):
+    translator = deepl.Translator(key)
+    # list to string
+    textEn = ""
+    for oneLine in texts:
+        textEn += oneLine + "\n"
 
-def srtFileTran(sourceFileNameAndPath, outputFileNameAndPath):
+    textZh = translator.translate_text(textEn, target_lang="zh")
+    textZh = str(textZh)
+    textsZh = textZh.split("\n")
+    return textsZh
+
+def srtFileGoogleTran(sourceFileNameAndPath, outputFileNameAndPath):
     srtContent = open(sourceFileNameAndPath, "r", encoding="utf-8").read()
     subGenerator = srt.parse(srtContent)
     subTitleList = list(subGenerator)
@@ -173,7 +186,24 @@ def srtFileTran(sourceFileNameAndPath, outputFileNameAndPath):
     for subTitle in subTitleList:
         contentList.append(subTitle.content)
     
-    contentList = trans(contentList)
+    contentList = googleTrans(contentList)
+
+    for i in range(len(subTitleList)):
+        subTitleList[i].content = contentList[i]
+    
+    srtContent = srt.compose(subTitleList)
+    with open(outputFileNameAndPath, "w", encoding="utf-8") as file:
+        file.write(srtContent)
+
+def srtFileDeeplTran(sourceFileNameAndPath, outputFileNameAndPath, key):
+    srtContent = open(sourceFileNameAndPath, "r", encoding="utf-8").read()
+    subGenerator = srt.parse(srtContent)
+    subTitleList = list(subGenerator)
+    contentList = []
+    for subTitle in subTitleList:
+        contentList.append(subTitle.content)
+    
+    contentList = deeplTranslate(contentList, key)
 
     for i in range(len(subTitleList)):
         subTitleList[i].content = contentList[i]
@@ -394,7 +424,7 @@ if __name__ == "__main__":
     PROXY = paramDict["proxy"]
     audioRemoveModelNameAndPath = paramDict["audio remove model path"]
 
-    proxies = {
+    proxies = None if not PROXY else {
         'http': f"{PROXY}",
         'https': f"{PROXY}",
         'socks5': f"{PROXY}"
@@ -567,8 +597,15 @@ if __name__ == "__main__":
     if paramDict["srt merge translate"]:
         try:
             print(f"Translating subtitle from {srtEnFileNameMergeAndPath} to {srtZhFileNameAndPath}")
-            srtFileTran(srtEnFileNameMergeAndPath, srtZhFileNameAndPath)
-            executeLog.write(f"[WORK o] Translate subtitle from {srtEnFileNameMergeAndPath} to {srtZhFileNameAndPath} successfully.")
+            if paramDict["srt merge translate tool"] == "deepl":
+                if paramDict["srt merge translate key"] == "":
+                    logStr = "[WORK x] Error: DeepL API key is not provided. Please provide it in the parameter file."
+                    executeLog.write(logStr)
+                    sys.exit(-1)
+                srtFileDeeplTran(srtEnFileNameMergeAndPath, srtZhFileNameAndPath, paramDict["srt merge translate key"])
+            else:
+                srtFileGoogleTran(srtEnFileNameMergeAndPath, srtZhFileNameAndPath)
+                executeLog.write(f"[WORK o] Translate subtitle from {srtEnFileNameMergeAndPath} to {srtZhFileNameAndPath} successfully.")
         except Exception as e:
             logStr = f"[WORK x] Error: Program blocked while translating subtitle from {srtEnFileNameMergeAndPath} to {srtZhFileNameAndPath}."
             executeLog.write(logStr)

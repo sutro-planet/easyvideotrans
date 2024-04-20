@@ -12,6 +12,8 @@
     "srt merge": false,
     "srt merge en to text": false,
     "srt merge translate": false,
+    "srt merge translate tool": "google",
+    "srt merge translate key": "",
     "srt merge zh to text": false,
     "srt to voice srouce": true,
     "GPT-SoVITS url": "",
