@@ -296,33 +296,25 @@ def srtToVoiceEdge(srtFileNameAndPath, outputDir):
     fileNames = []
     fileMp3Names = []
     
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    print("Start to convert srt to voice")
+    async def convertSrtToVoiceEdge(text, path):
+        print(f"Start to convert srt to voice into {path}, text: {text}")
+        communicate = edge_tts.Communicate(text, "zh-CN-XiaoyiNeural")
+        await communicate.save(path)
+
     coroutines  = []
     for subTitle in subTitleList:
-        string = subTitle.content
         fileMp3Name = str(index) + ".mp3"
         fileName = str(index) + ".wav"
         outputMp3NameAndPath = os.path.join(outputDir, fileMp3Name)
         fileMp3Names.append(fileMp3Name)
         fileNames.append(fileName)
-
-        communicate = edge_tts.Communicate(string, "zh-CN-XiaoyiNeural")
-        coroutine = communicate.save(outputMp3NameAndPath)
-        coroutines.append(coroutine)
+        coroutines.append(convertSrtToVoiceEdge(subTitle.content, outputMp3NameAndPath))
         index += 1
+
+    # wait for all coroutines to finish
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(asyncio.gather(*coroutines))
     
-    # loop.run_until_complete(asyncio.gather(*coroutines))
-    with ThreadPoolExecutor() as executor:
-        executor.submit(loop.run_until_complete, asyncio.gather(*coroutines))
-        while True:
-            all_tasks = asyncio.all_tasks(loop)
-            remaining_tasks = [task for task in all_tasks if not task.done()]
-            print(f"\rbegin tasks: {len(coroutines)}, all tasks: {len(remaining_tasks)}", end='')
-            if not remaining_tasks:
-                break
-    loop.close()
     print("\nConvert srt to mp3 voice successfully")
 
     # convert mp3 to wav
