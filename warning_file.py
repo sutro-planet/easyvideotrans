@@ -1,4 +1,5 @@
 import io
+import copy
 
 class WarningFile:
     def __init__(self, file_path, append=False):
@@ -9,9 +10,11 @@ class WarningFile:
         else:
             self.file = open(file_path, 'w')
 
-    def write(self, message):
+    def write(self, message, printMessage=True):
         self.file.write(message)
         self.file.write('\n')
+        if printMessage:
+            print(message)
         self.file.flush()
         
     def close(self):    
