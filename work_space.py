@@ -44,6 +44,7 @@ paramDictTemplate = {
     "audio zh transcribe": True, # [工作流程开关]合成后的语音转文字
     "audio zh transcribe model": "medium" # 中文语音转文字模型名称
 }
+diagnosisLog = None
 
 def create_param_template(path):
     with open(path, "w", encoding="utf-8") as file:
@@ -317,6 +318,7 @@ def srtToVoiceEdge(srtFileNameAndPath, outputDir):
 
 def voiceConnect(sourceDir, outputAndPath):
     MAX_SPEED_UP = 1.2  # 最大音频加速
+    MIN_SPEED_UP = 1.05  # 最小音频加速
     MIN_GAP_DURATION = 0.1  # 最小间隔时间，单位秒。低于这个间隔时间就认为音频重叠了
 
     if not os.path.exists(sourceDir):
@@ -331,9 +333,6 @@ def voiceConnect(sourceDir, outputAndPath):
     with open(srtMapFileAndPath, "r", encoding="utf-8") as f:
         voiceMapSrtContent = f.read()
 
-    logFileNameAndPath = outputAndPath + ".log"
-    logFile = WarningFile(logFileNameAndPath)
-
     # 确定音频长度
     voiceMapSrt = list(srt.parse(voiceMapSrtContent))
     duration = voiceMapSrt[-1].end.total_seconds() * 1000
@@ -341,6 +340,8 @@ def voiceConnect(sourceDir, outputAndPath):
     finalAudioEnd = voiceMapSrt[-1].start.total_seconds() * 1000
     finalAudioEnd += AudioSegment.from_wav(finalAudioFileAndPath).duration_seconds
     duration = max(duration, finalAudioEnd)
+
+    diagnosisLog.write("\n<voice connect section>")
 
     # 初始化一个空的音频段
     combined = AudioSegment.silent(duration=duration)
@@ -361,15 +362,15 @@ def voiceConnect(sourceDir, outputAndPath):
                 if speedUp > MAX_SPEED_UP:
                     # 转换为 HH:MM:SS 格式
                     logStr = f"Warning: The audio {i+1} , at {timeStr} , is too short, speed up is {speedUp}."
-                    logFile.write(logStr)
+                    diagnosisLog.write(logStr)
                     print(logStr)
                 
                 # 音频如果提速一个略大于1，则speedup函数可能会出现一个错误的音频，所以这里确定最小的speedup为1.01
-                if speedUp < 1.05:
-                    logStr = f"Warning: The audio {i+1} , at {timeStr} , speed up is {speedUp}."
-                    logFile.write(logStr)
+                if speedUp < MIN_SPEED_UP:
+                    logStr = f"Warning: The audio {i+1} , at {timeStr} , speed up {speedUp} is too near to 1.0. Set to {MIN_SPEED_UP} forcibly."
+                    diagnosisLog.write(logStr)
                     print(logStr)
-                    speedUp = 1.05
+                    speedUp = MIN_SPEED_UP
                 audio = audio.speedup(playback_speed=speedUp)
 
         combined = combined.overlay(audio, position=audioPosition)
@@ -404,6 +405,11 @@ if __name__ == "__main__":
     if not os.path.exists(workPath):
         os.makedirs(workPath)
         print(f"Directory {workPath} created.")
+    
+    # 诊断日志
+    logFileName = "diagnosis.log"
+    logFileNameAndPath = os.path.join(workPath, logFileName)
+    diagnosisLog = WarningFile(logFileNameAndPath)
 
     # 下载视频
     voiceFileName = f"{videoId}.mp4"
