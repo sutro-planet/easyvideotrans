@@ -5,36 +5,135 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
 <body>
-    <h1>使用ID下载Youtube视频</h1>
-    <form action="/yt_download" method="post" id="downloadForm">
-        <label for="video_id">Enter YouTube Video ID:</label><br>
-        <input type="text" id="video_id" name="video_id"><br>
-        <input type="submit" value="Download">
-        <a id="downloadButton" class="btn btn-primary" role="button" style="display: none;">Download Video</a>
-    </form>
+<h1>使用ID下载Youtube视频</h1>
+<form action="/yt_download" method="post" id="downloadForm">
+    <label for="video_id">Enter YouTube Video ID:</label><br>
+    <input type="text" id="video_id" name="video_id"><br>
+    <input type="submit" value="Download">
+    <a id="downloadButton" class="btn btn-primary" role="button" style="display: none;">Download Video</a>
+</form>
 
-    <p id="serverResponse"></p>
-    <script>
-        $(document).ready(function(){
-            $("#downloadForm").submit(function(e){
-                e.preventDefault();
-                $.ajax({
-                    url: '/yt_download',
-                    type: 'post',
-                    contentType: 'application/json',
-                    data: JSON.stringify({"video_id": $("#video_id").val()}),
-                    success: function(response) {
-                        $("#serverResponse").text(response.message);
-                        $("#downloadButton").attr('href', '/yt/' + response.video_id);
-                        $("#downloadButton").show();
-                    },
-                    error: function(response) {
-                        $("#downloadButton").hide();
-                        $("#serverResponse").text(response.responseJSON.message);
-                    }
-                });
+<h1>提取Youtube音频</h1>
+<form action="/extra_audio/" method="post" id="extractAudioForm">
+    <label for="video_id">Enter YouTube Video ID to extract Audio:</label><br>
+    <input type="text" id="video_id" name="video_id"><br>
+    <input type="submit" value="ExtractAudio">
+    <a id="extractAudioButton" class="btn btn-primary" role="button" style="display: none;">Extract Audio</a>
+</form>
+
+<h1>去除Youtube音频背景音乐</h1>
+<form action="/remove_audio_bg/" method="post" id="removeBackgroundMusicForm">
+    <label for="video_id">Enter YouTube Video ID to extract Audio:</label><br>
+    <input type="text" id="video_id" name="video_id"><br>
+    <input type="submit" value="Extract Voice and Background Music">
+    <a id="downloadVoiceButton" class="btn btn-primary" role="button" style="display: none;">Download Voice</a>
+    <a id="downloadBackgroundButton" class="btn btn-primary" role="button" style="display: none;">Download
+        Background</a>
+</form>
+
+<h1>从英文音频中提取SRT</h1>
+<form action="/transcribe/" method="post" id="transcribeEnForm">
+    <label for="video_id">Enter YouTube Video ID to transcribe:</label><br>
+    <input type="text" id="video_id" name="video_id"><br>
+    <input type="submit" value="Transcribe SRT from English">
+    <a id="downloadSrtEnButton" class="btn btn-primary" role="button" style="display: none;">Download SRT</a>
+    <a id="downloadSrtEnMergedButton" class="btn btn-primary" role="button" style="display: none;">Download
+        SRT Merged</a>
+</form>
+
+
+<p id="serverResponse"></p>
+<script>
+    $(document).ready(function () {
+        $("#downloadForm").submit(function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: '/yt_download',
+                type: 'post',
+                contentType: 'application/json',
+                data: JSON.stringify({"video_id": $("#video_id").val()}),
+                success: function (response) {
+                    $("#serverResponse").text(response.message);
+                    $("#downloadButton").attr('href', '/yt/' + response.video_id);
+                    $("#downloadButton").show();
+                },
+                error: function (response) {
+                    $("#downloadButton").hide();
+                    $("#serverResponse").text(response.responseJSON.message);
+                }
             });
         });
-        </script>
+
+
+        $("#extractAudioForm").submit(function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: '/extra_audio',
+                type: 'post',
+                contentType: 'application/json',
+                data: JSON.stringify({"video_id": $("#video_id").val()}),
+                success: function (response) {
+                    $("#extractAudioButton").attr('href', '/audio/' + response.video_id);
+                    $("#extractAudioButton").show();
+                    $("#serverResponse").text(response.message);
+                },
+                error: function (response) {
+                    $("#extractAudioButton").hide();
+                    $("#serverResponse").text(response.responseJSON.message);
+                }
+            });
+        });
+
+        $("#removeBackgroundMusicForm").submit(function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: '/remove_audio_bg',
+                type: 'post',
+                contentType: 'application/json',
+                data: JSON.stringify({"video_id": $("#video_id").val()}),
+                success: function (response) {
+                    $("#downloadVoiceButton").attr('href', '/audio_no_bg/' + response.video_id);
+                    $("#downloadVoiceButton").show();
+
+                    $("#downloadBackgroundButton").attr('href', '/audio_bg/' + response.video_id);
+                    $("#downloadBackgroundButton").show();
+
+                    $("#serverResponse").text(response.message);
+                },
+                error: function (response) {
+                    $("#downloadBackgroundButton").hide();
+                    $("#serverResponse").text(response.responseJSON.message);
+                }
+            });
+        });
+
+
+        $("#transcribeEnForm").submit(function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: '/transcribe',
+                type: 'post',
+                contentType: 'application/json',
+                data: JSON.stringify({"video_id": $("#video_id").val()}),
+                success: function (response) {
+                    $("#downloadSrtEnButton").attr('href', '/srt_en/' + response.video_id);
+                    $("#downloadSrtEnButton").show();
+
+                    $("#downloadSrtEnMergedButton").attr('href', '/srt_en_merged/' + response.video_id);
+                    $("#downloadSrtEnMergedButton").show();
+
+
+                    $("#serverResponse").text(response.message);
+                },
+                error: function (response) {
+                    $("#downloadSrtEnButton").hide();
+                    $("#downloadSrtEnMergedButton").hide();
+                    $("#serverResponse").text(response.responseJSON.message);
+                }
+            });
+        });
+
+    });
+</script>
 </body>
 </html>
