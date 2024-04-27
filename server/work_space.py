@@ -1,4 +1,4 @@
-from tools.audio_remove import audio_remove
+from server.tools.audio_remove import audio_remove
 from warning_file import WarningFile
 
 import os
@@ -15,7 +15,6 @@ from tqdm import tqdm
 from pydub import AudioSegment
 import asyncio  
 import edge_tts
-from concurrent.futures import ThreadPoolExecutor
 import datetime
 from moviepy.editor import VideoFileClip
 import sys
@@ -82,15 +81,15 @@ def transcribe_audio(path, modelName="base.en", languate="en",srtFilePathAndName
     print("Output file: " + srtFilePathAndName)
     return True
 
-def srtSentanceMerge(sourceSrtFilePathAndName, OutputSrtFilePathAndName):
+def srtSentanceMerge(sourceSrtFilePathAndName, OutputSrtFilePathAndName, logger=None):
     srtContent = open(sourceSrtFilePathAndName, "r", encoding="utf-8").read()
     subGenerator = srt.parse(srtContent)
     subList = list(subGenerator)
     if len(subList) == 0:
         print("No subtitle found.")
         return False
-    
-    diagnosisLog.write("\n<Sentence Merge Section>", False)
+
+    logger.info("\n<Sentence Merge Section>")
 
     subPorcessingIndex = 1
     subItemList = []
@@ -105,8 +104,8 @@ def srtSentanceMerge(sourceSrtFilePathAndName, OutputSrtFilePathAndName):
         if endSentenceIndex != -1 and endSentenceIndex != len(subItem.content) - 1:
             logString = f"Warning: Sentence (index:{endSentenceIndex}) not end at the end of the subtitle.\n"
             logString += f"Content: {subItem.content}"
-            diagnosisLog.write(logString)
-    
+            logger.warning(logString)
+
         # 以后一个字幕，直接拼接送入就可以了
         if subItem == subList[-1]:
             if subItemProcessing is None:
