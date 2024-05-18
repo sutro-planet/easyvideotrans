@@ -6,7 +6,7 @@ from functools import wraps
 from flask import Flask, request, jsonify, render_template, send_from_directory
 
 from tools.audio_remove import audio_remove
-from work_space import transcribeAudioEn, srtSentanceMerge, srtFileGoogleTran, srtFileDeeplTran, srtFileGPTTran, srtToVoiceEdge, voiceConnect
+from work_space import transcribeAudioEn, srtSentanceMerge, srtFileGoogleTran, srtFileDeeplTran, srtFileGPTTran, srtToVoiceEdge, voiceConnect, zhVideoPreview
 
 app = Flask(__name__)
 
@@ -363,3 +363,57 @@ def voice_connect_serve(video_id):
 
     return jsonify({"message": log_warning_return_str(
         f'Voice connect {voice_connect_fn} not found at {voice_connect_path}')}), 404
+
+@app.route('/video_preview', methods=['POST'])
+@require_video_id_from_post_request
+def video_preview(video_id):
+    data = request.get_json()
+    video_id = data['video_id']
+    voice_connect_fn = video_id + "_zh.wav"
+    voice_connect_path = os.path.join(output_path, voice_connect_fn)
+    audio_bg_fn = f'{video_id}_bg.wav'
+    audio_bg_path = os.path.join(output_path, audio_bg_fn)
+    video_fn = f"{video_id}.mp4"
+    video_fhd = f"{video_id}_fhd.mp4"
+    video_save_path = os.path.join(output_path, video_fn)
+    video_fhd_save_path = os.path.join(output_path, video_fhd)
+    video_out_fn = f"{video_id}_preview.mp4"
+    video_out_path = os.path.join(output_path, video_out_fn)
+
+    # 检查音频
+    if os.path.exists(voice_connect_path) == False or os.path.exists(audio_bg_path) == False:
+        return jsonify({"message": log_warning_return_str(
+            f'Chinese Voice {voice_connect_fn} not found at {output_path}')}), 404
+
+    # 检查视频
+    if os.path.exists(video_save_path) == False and os.path.exists(video_fhd_save_path) == False:
+        return jsonify({"message": log_warning_return_str(
+            f"No video found")}), 404
+    
+    # 选择最佳分辨率的视频
+    video_source_path = ""
+    if os.path.exists(video_fhd_save_path):
+        video_source_path=video_fhd_save_path
+    else:
+        video_source_path=video_save_path
+
+    # 生成视频预览
+    ret = zhVideoPreview(app.logger, video_source_path, voice_connect_path, audio_bg_path, "暂时没有处理字幕文件，所以随便写", video_out_path)
+    if ret == True:
+        return jsonify({"message": log_info_return_str(
+            f"Video preview {video_fhd} successfully."),
+            "video_id": video_id}), 200
+    else:
+        return jsonify({"message": log_warning_return_str("Video preview failed.")}), 404
+
+
+@app.route('/video_preview/<video_id>', methods=['GET'])
+def video_preview_serve(video_id):
+    video_preview_fn = f"{video_id}_preview.mp4"
+    video_preview_path = os.path.join(output_path, video_preview_fn)
+
+    if os.path.exists(video_preview_path):
+        return send_from_directory(output_path, video_preview_fn, as_attachment=True)
+
+    return jsonify({"message": log_warning_return_str(
+        f'Video preview {video_preview_fn} not found at {video_preview_path}')}), 404

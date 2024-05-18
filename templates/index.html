@@ -77,6 +77,14 @@
     <a id="downloadvoiceConnectButton" class="btn btn-primary" role="button" style="display: none;">Download Connected Voice</a>
 </form>
 
+<h1>渲染预览视频</h1>
+<form action="/video_preview/" method="post" id="videoPreview">
+    <label for="video_id">Enter YouTube Video ID to transcribe:</label><br>
+    <input type="text" id="video_id" name="video_id"><br>
+    <input type="submit" value="video preview">
+    <a id="downloadViewoPreviewButton" class="btn btn-primary" role="button" style="display: none;">Download Preview Video</a>
+</form>
+
 <p id="serverResponse"></p>
 <script>
     $(document).ready(function () {
@@ -233,6 +241,24 @@
             });
         });
 
+        $("#videoPreview").submit(function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: '/video_preview',
+                type: 'post',
+                contentType: 'application/json',
+                data: JSON.stringify({"video_id": $("#video_id").val()}),
+                success: function (response) {
+                    $("#downloadViewoPreviewButton").attr('href', '/video_preview/' + response.video_id);
+                    $("#downloadViewoPreviewButton").show();
+                    $("#serverResponse").text(response.message);
+                },
+                error: function (response) {
+                    $("#downloadViewoPreviewButton").hide();
+                    $("#serverResponse").text(response.responseJSON.message);
+                }
+            });
+        });
     });
 </script>
 </body>

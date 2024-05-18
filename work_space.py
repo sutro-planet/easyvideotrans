@@ -517,18 +517,7 @@ def srtToVoiceEdge(logger, srtFileNameAndPath, outputDir, character = "zh-CN-Xia
     print("Convert srt to wav voice successfully")
     return True
 
-def zhVideoPreview(videoFileNameAndPath, voiceFileNameAndPath, insturmentFileNameAndPath, srtFileNameAndPath, outputFileNameAndPath):
-    """
-    预览视频
-    参数:
-        videoFileNameAndPath (str): 视频文件的路径和文件名
-        voiceFileNameAndPath (str): 音频文件的路径和文件名
-        insturmentFileNameAndPath (str): 乐器音频文件的路径和文件名
-        srtFileNameAndPath (str): 字幕文件的路径和文件名
-        outputFileNameAndPath (str): 输出文件的路径和文件名
-    返回:
-        bool: 如果成功生成预览视频，则返回True，否则返回False
-    """
+def zhVideoPreview(logger, videoFileNameAndPath, voiceFileNameAndPath, insturmentFileNameAndPath, srtFileNameAndPath, outputFileNameAndPath):
     # 从moviepy.editor导入VideoFileClip的创建音-视频剪辑
     video_clip = VideoFileClip(videoFileNameAndPath)
 
