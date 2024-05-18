@@ -459,7 +459,7 @@ def srtToVoice(url, srtFileNameAndPath, outputDir):
 @tenacity.retry(wait=tenacity.wait_exponential(multiplier=1, min=4, max=10),
                     stop=tenacity.stop_after_attempt(5),
                     reraise=True)
-def srtToVoiceEdge(srtFileNameAndPath, outputDir, charactor = "zh-CN-XiaoyiNeural"):
+def srtToVoiceEdge(logger, srtFileNameAndPath, outputDir, character = "zh-CN-XiaoyiNeural"):
     # create output directory if not exists
     if not os.path.exists(outputDir):
         os.makedirs(outputDir)
@@ -473,7 +473,7 @@ def srtToVoiceEdge(srtFileNameAndPath, outputDir, charactor = "zh-CN-XiaoyiNeura
     
     async def convertSrtToVoiceEdge(text, path):
         print(f"Start to convert srt to voice into {path}, text: {text}")
-        communicate = edge_tts.Communicate(text, charactor)
+        communicate = edge_tts.Communicate(text, character)
         await communicate.save(path)
 
     coroutines  = []
@@ -555,7 +555,7 @@ def zhVideoPreview(videoFileNameAndPath, voiceFileNameAndPath, insturmentFileNam
     return True
 
 
-def voiceConnect(sourceDir, outputAndPath):
+def voiceConnect(logger, sourceDir, outputAndPath):
     MAX_SPEED_UP = 1.2  # 最大音频加速
     MIN_SPEED_UP = 1.05  # 最小音频加速
     MIN_GAP_DURATION = 0.1  # 最小间隔时间，单位秒。低于这个间隔时间就认为音频重叠了
@@ -580,7 +580,7 @@ def voiceConnect(sourceDir, outputAndPath):
     finalAudioEnd += AudioSegment.from_wav(finalAudioFileAndPath).duration_seconds * 1000
     duration = max(duration, finalAudioEnd)
 
-    diagnosisLog.write("\n<Voice connect section>", False)
+    # diagnosisLog.write("\n<Voice connect section>", False)
 
     # 初始化一个空的音频段
     combined = AudioSegment.silent(duration=duration)
@@ -601,12 +601,12 @@ def voiceConnect(sourceDir, outputAndPath):
                 if speedUp > MAX_SPEED_UP:
                     # 转换为 HH:MM:SS 格式
                     logStr = f"Warning: The audio {i+1} , at {timeStr} , is too short, speed up is {speedUp}."
-                    diagnosisLog.write(logStr)
+                    # diagnosisLog.write(logStr)
                 
                 # 音频如果提速一个略大于1，则speedup函数可能会出现一个错误的音频，所以这里确定最小的speedup为1.01
                 if speedUp < MIN_SPEED_UP:
                     logStr = f"Warning: The audio {i+1} , at {timeStr} , speed up {speedUp} is too near to 1.0. Set to {MIN_SPEED_UP} forcibly."
-                    diagnosisLog.write(logStr)
+                    # diagnosisLog.write(logStr)
                     speedUp = MIN_SPEED_UP
                 audio = audio.speedup(playback_speed=speedUp)
 

@@ -6,7 +6,7 @@ from functools import wraps
 from flask import Flask, request, jsonify, render_template, send_from_directory
 
 from tools.audio_remove import audio_remove
-from work_space import transcribeAudioEn, srtSentanceMerge, srtFileGoogleTran, srtFileDeeplTran, srtFileGPTTran
+from work_space import transcribeAudioEn, srtSentanceMerge, srtFileGoogleTran, srtFileDeeplTran, srtFileGPTTran, srtToVoiceEdge, voiceConnect
 
 app = Flask(__name__)
 
@@ -262,8 +262,8 @@ def srt_en_merged_serve(video_id):
 @require_video_id_from_post_request
 def transhlate_to_zh(video_id):
     data = request.get_json()
-    translateVendor = data['translate_vendor']
     video_id = data['video_id']
+    translateVendor = data['translate_vendor']
     api_key = data['translate_key']
     en_srt_merged_fn = f'{video_id}_en_merged.srt'
     zh_srt_merged_fn = f'{video_id}_zh_merged.srt'
@@ -317,10 +317,7 @@ def transhlate_to_zh(video_id):
         return jsonify({"message": log_error_return_str(
             f'An error occurred while translating SRT from {en_srt_merged_fn} to {zh_srt_merged_fn}: {exception}')}), 500
 
-    return  jsonify({"message": log_info_return_str(
-            f"Translate to Chinese from successfully."),
-            "video_id": video_id}), 200
-
+    return  jsonify({"message": log_error_return_str("Translate failed.")}), 500
 
 
 @app.route('/srt_zh_merged/<video_id>', methods=['GET'])
@@ -333,3 +330,36 @@ def srt_zh_merged_serve(video_id):
 
     return jsonify({"message": log_warning_return_str(
         f'Transcribed English SRT {zh_srt_merged_fn} not found at {zh_srt_merged_path}')}), 404
+
+
+@app.route('/voice_connect', methods=['POST'])
+@require_video_id_from_post_request
+def voice_connect(video_id):
+    data = request.get_json()
+    video_id = data['video_id']
+    voiceDir = os.path.join(output_path, video_id+"_zh_source")
+    voice_connect_fn = video_id + "_zh.wav"
+    voice_connect_path = os.path.join(output_path, voice_connect_fn)
+
+    if os.path.exists(voiceDir) == False:
+        return jsonify({"message": log_warning_return_str(
+            f'Voice directory {voiceDir} not found at {output_path}')}), 404
+
+    ret = voiceConnect(app.logger, voiceDir, voice_connect_path)
+    if ret == True:
+        return jsonify({"message": log_info_return_str(
+            f"Voice connect {voice_connect_fn} successfully."),
+            "video_id": video_id}), 200
+    else:
+        return jsonify({"message": log_warning_return_str("Voice connect failed.")}), 404
+
+@app.route('/voice_connect/<video_id>', methods=['GET'])
+def voice_connect_serve(video_id):
+    voice_connect_fn = video_id + "_zh.wav"
+    voice_connect_path = os.path.join(output_path, voice_connect_fn)
+
+    if os.path.exists(voice_connect_path):
+        return send_from_directory(output_path, voice_connect_fn, as_attachment=True)
+
+    return jsonify({"message": log_warning_return_str(
+        f'Voice connect {voice_connect_fn} not found at {voice_connect_path}')}), 404
