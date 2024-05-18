@@ -4,6 +4,7 @@ from pytube import YouTube
 from moviepy.editor import VideoFileClip
 from functools import wraps
 from flask import Flask, request, jsonify, render_template, send_from_directory
+import zipfile
 
 from tools.audio_remove import audio_remove
 from work_space import transcribeAudioEn, srtSentanceMerge, srtFileGoogleTran, srtFileDeeplTran, srtFileGPTTran, srtToVoiceEdge, voiceConnect, zhVideoPreview
@@ -363,6 +364,37 @@ def voice_connect_serve(video_id):
 
     return jsonify({"message": log_warning_return_str(
         f'Voice connect {voice_connect_fn} not found at {voice_connect_path}')}), 404
+
+@app.route('/tts', methods=['POST'])
+@require_video_id_from_post_request
+def tts(video_id):
+    data = request.get_json()
+    video_id = data['video_id']
+    return jsonify({"message": log_info_return_str(
+            f"tts success."),
+            "video_id": video_id}), 200
+
+@app.route('/tts/<video_id>', methods=['GET'])
+def tts_serve(video_id):
+    tts_dir = os.path.join(output_path, video_id+"_zh_source")
+    tts_zip_fn = video_id + "_zh_source.zip"
+    tts_zip_path = os.path.join(output_path, tts_zip_fn)
+    print("tts_dir", tts_dir)
+    if os.path.exists(tts_dir)==False:
+        return jsonify({"message": log_warning_return_str(
+            f'Voice directory {tts_dir} not found at {output_path}')}), 404
+    
+    zipf = zipfile.ZipFile(tts_zip_path, 'w', zipfile.ZIP_DEFLATED)
+    for root, dirs, files in os.walk(tts_dir):
+        for file in files:
+            file_path = os.path.join(root, file)
+            relative_path = os.path.relpath(file_path, output_path)
+            print(file_path+","+relative_path)
+            zipf.write(file_path, relative_path)
+
+    zipf.close()
+    print("tts_zip_path", tts_zip_path)
+    return send_from_directory(output_path, tts_zip_fn, as_attachment=True)
 
 @app.route('/video_preview', methods=['POST'])
 @require_video_id_from_post_request
