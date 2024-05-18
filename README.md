@@ -205,7 +205,7 @@ models目录下提供了一个基本可用的模型baseline.pth
 
 # 网页版开发 (施工中)
 
-跑Flask服务器
+在本地目录，跑Flask服务器
 
 ```
 flask run --host=0.0.0.0 --debug

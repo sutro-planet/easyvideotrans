@@ -6,7 +6,7 @@ import torch.utils.data
 from tqdm import tqdm
 
 try:
-    from server.lib import spec_utils
+    from lib import spec_utils
 except ModuleNotFoundError:
     import spec_utils
 
