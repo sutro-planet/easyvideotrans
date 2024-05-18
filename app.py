@@ -6,7 +6,7 @@ from functools import wraps
 from flask import Flask, request, jsonify, render_template, send_from_directory
 
 from tools.audio_remove import audio_remove
-from work_space import transcribe_audio, srtSentanceMerge
+from work_space import transcribeAudioEn, srtSentanceMerge
 
 app = Flask(__name__)
 
@@ -58,17 +58,28 @@ def index():
 @require_video_id_from_post_request
 def yt_download(video_id):
     video_fn = f"{video_id}.mp4"
+    video_fhd = f"{video_id}_fhd.mp4"
     video_save_path = os.path.join(output_path, video_fn)
+    video_fhd_save_path = os.path.join(output_path, video_fhd)
 
-    if os.path.exists(video_save_path):
+    if os.path.exists(video_save_path) and os.path.exists(video_fhd_save_path):
         return jsonify({"message": log_info_return_str(f"Video already exists at {video_save_path}, skip downloading."),
                         "video_id": video_id}), 200
 
     try:
-        yt = YouTube(f'https://www.youtube.com/watch?v={video_id}', proxies=None)
-        video = yt.streams.filter(progressive=True).last()
-        video.download(output_path=output_path, filename=video_fn)
-        return jsonify({"message": log_info_return_str(f"Download video {video_id} to {video_save_path} successfully."),
+        # 下载标清视频
+        if not os.path.exists(video_save_path):
+            yt = YouTube(f'https://www.youtube.com/watch?v={video_id}', proxies=None)
+            video  = yt.streams.filter(progressive=True, file_extension='mp4').order_by('resolution').asc().first()
+            video.download(output_path=output_path, filename=video_fn)
+
+        # 下载高清视频
+        if not os.path.exists(video_fhd_save_path):
+            yt = YouTube(f'https://www.youtube.com/watch?v={video_id}', proxies=None)
+            video  = yt.streams.filter(progressive=False, file_extension='mp4').order_by('resolution').desc().first()
+            video.download(output_path=output_path, filename=video_fhd)
+
+        return jsonify({"message": log_info_return_str(f"Download video {video_id} and {video_fhd} to {output_path} successfully."),
                         "video_id": video_id}), 200
     except Exception as e:
         exception = e
@@ -191,7 +202,7 @@ def audio_bg_serve(video_id):
 @app.route('/transcribe', methods=['POST'])
 @require_video_id_from_post_request
 def transcribe(video_id):
-    transcribe_model = "base.en"
+    transcribe_model = "medium"
     en_srt_fn, en_srt_merged_fn, audio_no_bg_fn = f'{video_id}_en.srt', f'{video_id}_en_merged.srt', f'{video_id}_no_bg.wav'
 
     en_srt_path, en_srt_merged_path, audio_no_bg_path = (os.path.join(output_path, en_srt_fn),
@@ -209,8 +220,8 @@ def transcribe(video_id):
             f'not found at {audio_no_bg_path}, please extract it first')}), 404
 
     try:
-        transcribe_audio(audio_no_bg_path, transcribe_model, "en", srtFilePathAndName=en_srt_path)
-        srtSentanceMerge(en_srt_path, en_srt_merged_path, logger=app.logger)
+        transcribeAudioEn(audio_no_bg_path, transcribe_model, "en", srtFilePathAndName=en_srt_path)
+        srtSentanceMerge(en_srt_path, en_srt_merged_path)
 
         return jsonify({"message": log_info_return_str(
             f"Transcribed SRT from {audio_no_bg_fn} as {en_srt_fn} and {en_srt_merged_fn} successfully."),
