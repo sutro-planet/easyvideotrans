@@ -2,7 +2,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-from server.lib import layers
+from lib import layers
 
 
 class BaseNet(nn.Module):

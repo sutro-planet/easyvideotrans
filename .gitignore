@@ -19,4 +19,9 @@ venv/
 __pycache__
 work
 
-server/output/
+models--Systran--faster-whisper-*
+build
+dist
+conver
+
+output/
