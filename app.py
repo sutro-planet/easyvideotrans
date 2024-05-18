@@ -13,7 +13,7 @@ app = Flask(__name__)
 app_path = os.path.abspath(__file__)
 dir_path = os.path.dirname(app_path)
 output_path = os.path.join(dir_path, "output")
-model_path = os.path.join(dir_path, "..", "models")
+model_path = os.path.join(dir_path, "models")
 baseline_path = os.path.join(model_path, "baseline.pth")
 
 

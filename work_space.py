@@ -1,4 +1,4 @@
-from server.tools.audio_remove import audio_remove
+from tools.audio_remove import audio_remove
 from warning_file import WarningFile
 
 import os
