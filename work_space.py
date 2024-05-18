@@ -30,7 +30,7 @@ import tenacity
 from tools.merge_subtitle import SubtitleMerger
 from tools.merge_video_srt import add_subtitles_and_mix_audio
 
-PROXY = "127.0.0.1:7890"
+PROXY = ""
 proxies = None
 TTS_MAX_TRY_TIMES = 16
 CHATGPT_URL = "https://api.openai.com/v1/"
@@ -310,7 +310,7 @@ def deeplTranslate(texts, key):
     textsZh = textZh.split("\n")
     return textsZh
 
-def srtFileGoogleTran(sourceFileNameAndPath, outputFileNameAndPath):
+def srtFileGoogleTran(logger, sourceFileNameAndPath, outputFileNameAndPath):
     srtContent = open(sourceFileNameAndPath, "r", encoding="utf-8").read()
     subGenerator = srt.parse(srtContent)
     subTitleList = list(subGenerator)
@@ -319,7 +319,6 @@ def srtFileGoogleTran(sourceFileNameAndPath, outputFileNameAndPath):
         contentList.append(subTitle.content)
     
     contentList = googleTrans(contentList)
-
     for i in range(len(subTitleList)):
         subTitleList[i].content = contentList[i]
     
@@ -327,7 +326,9 @@ def srtFileGoogleTran(sourceFileNameAndPath, outputFileNameAndPath):
     with open(outputFileNameAndPath, "w", encoding="utf-8") as file:
         file.write(srtContent)
 
-def srtFileDeeplTran(sourceFileNameAndPath, outputFileNameAndPath, key):
+    return True
+
+def srtFileDeeplTran(logger, sourceFileNameAndPath, outputFileNameAndPath, key):
     srtContent = open(sourceFileNameAndPath, "r", encoding="utf-8").read()
     subGenerator = srt.parse(srtContent)
     subTitleList = list(subGenerator)
@@ -343,6 +344,7 @@ def srtFileDeeplTran(sourceFileNameAndPath, outputFileNameAndPath, key):
     srtContent = srt.compose(subTitleList)
     with open(outputFileNameAndPath, "w", encoding="utf-8") as file:
         file.write(srtContent)
+    return True
 
 def GPTTranslate(texts, key, model, proxies):
     translator = TranslatorClass(api_key=key, 
@@ -365,7 +367,7 @@ def GPTTranslate(texts, key, model, proxies):
         textsZh.append(result['text_result'])
     return textsZh
 
-def srtFileGPTTran(model, proxies, sourceFileNameAndPath, outputFileNameAndPath, key):
+def srtFileGPTTran(logger, model, proxies, sourceFileNameAndPath, outputFileNameAndPath, key):
     srtContent = open(sourceFileNameAndPath, "r", encoding="utf-8").read()
     subGenerator = srt.parse(srtContent)
     subTitleList = list(subGenerator)
@@ -381,6 +383,7 @@ def srtFileGPTTran(model, proxies, sourceFileNameAndPath, outputFileNameAndPath,
     srtContent = srt.compose(subTitleList)
     with open(outputFileNameAndPath, "w", encoding="utf-8") as file:
         file.write(srtContent)
+    return True
 
 def stringToVoice(url, string, outputFile):
     data = {

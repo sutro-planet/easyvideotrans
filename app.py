@@ -6,7 +6,7 @@ from functools import wraps
 from flask import Flask, request, jsonify, render_template, send_from_directory
 
 from tools.audio_remove import audio_remove
-from work_space import transcribeAudioEn, srtSentanceMerge
+from work_space import transcribeAudioEn, srtSentanceMerge, srtFileGoogleTran, srtFileDeeplTran, srtFileGPTTran
 
 app = Flask(__name__)
 
@@ -258,4 +258,78 @@ def srt_en_merged_serve(video_id):
         f'Transcribed English SRT {en_srt_merged_fn} not found at {en_srt_merged_path}')}), 404
 
 
+@app.route('/translate_to_zh', methods=['POST'])
+@require_video_id_from_post_request
+def transhlate_to_zh(video_id):
+    data = request.get_json()
+    translateVendor = data['translate_vendor']
+    video_id = data['video_id']
+    api_key = data['translate_key']
+    en_srt_merged_fn = f'{video_id}_en_merged.srt'
+    zh_srt_merged_fn = f'{video_id}_zh_merged.srt'
+    en_srt_merged_path = os.path.join(output_path, en_srt_merged_fn)
+    zh_srt_merged_path = os.path.join(output_path, zh_srt_merged_fn)
 
+    if os.path.exists(en_srt_merged_path) == False:
+        return jsonify({"message": log_warning_return_str(
+            f'English SRT {en_srt_merged_fn} not found at {en_srt_merged_path}')}), 404
+
+    # 检查支持的翻译厂商
+    if translateVendor not in ["google", "deepl"] and "gpt" not in translateVendor:
+        return jsonify({"message": log_warning_return_str("Unsupported translate vendor.")}), 404
+
+    try:
+        if translateVendor ==  "google":
+            ret = srtFileGoogleTran(logger=app.logger, sourceFileNameAndPath=en_srt_merged_path, outputFileNameAndPath=zh_srt_merged_path)
+            if ret == True:
+                return jsonify({"message": log_info_return_str(
+                    f"using google translate to translate SRT from {en_srt_merged_fn} to {zh_srt_merged_fn} successfully."),
+                    "video_id": video_id}), 200
+            else:
+                return jsonify({"message": log_warning_return_str("Google translate failed.")}), 404
+            
+        elif translateVendor ==  "deepl":
+            if api_key == "":
+                return jsonify({"message": log_warning_return_str("Missing translate key.")}), 404
+            else:
+                ret = srtFileDeeplTran(logger=app.logger, sourceFileNameAndPath=en_srt_merged_path, outputFileNameAndPath=zh_srt_merged_path, key=api_key)
+                if ret == True:
+                    return jsonify({"message": log_info_return_str(
+                        f"using deepl translate to translate SRT from {en_srt_merged_fn} to {zh_srt_merged_fn} successfully."),
+                        "video_id": video_id}), 200
+                else:
+                    return jsonify({"message": log_warning_return_str("Deepl translate failed.")}), 404
+        
+        elif "gpt" in translateVendor:
+            if api_key == "":
+                return jsonify({"message": log_warning_return_str("Missing translate key.")}), 404
+            else:
+                ret = srtFileGPTTran(logger=app.logger, model=translateVendor, proxies=None, sourceFileNameAndPath=en_srt_merged_path, outputFileNameAndPath=zh_srt_merged_path, key=api_key)
+                if ret == True:
+                    return jsonify({"message": log_info_return_str(
+                        f"using {translateVendor} translate to translate SRT from {en_srt_merged_fn} to {zh_srt_merged_fn} successfully."),
+                        "video_id": video_id}), 200
+                else:
+                    return jsonify({"message": log_warning_return_str("GPT translate failed.")}), 404
+
+    except Exception as e:
+        exception = e
+        return jsonify({"message": log_error_return_str(
+            f'An error occurred while translating SRT from {en_srt_merged_fn} to {zh_srt_merged_fn}: {exception}')}), 500
+
+    return  jsonify({"message": log_info_return_str(
+            f"Translate to Chinese from successfully."),
+            "video_id": video_id}), 200
+
+
+
+@app.route('/srt_zh_merged/<video_id>', methods=['GET'])
+def srt_zh_merged_serve(video_id):
+    zh_srt_merged_fn = f'{video_id}_zh_merged.srt'
+    zh_srt_merged_path = os.path.join(output_path, zh_srt_merged_fn)
+
+    if os.path.exists(zh_srt_merged_path):
+        return send_from_directory(output_path, zh_srt_merged_fn, as_attachment=True)
+
+    return jsonify({"message": log_warning_return_str(
+        f'Transcribed English SRT {zh_srt_merged_fn} not found at {zh_srt_merged_path}')}), 404

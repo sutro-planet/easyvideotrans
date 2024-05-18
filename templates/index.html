@@ -42,18 +42,29 @@
 
 
 <h1>翻译源原始字幕</h1>
-<form action="/transhlate_to_zh/" method="post" id="transhlateToZh">
+<form action="/translate_to_zh/" method="post" id="translateToZh">
     <label for="video_id">Enter YouTube Video ID to transcribe:</label><br>
     <input type="text" id="video_id" name="video_id"><br>
     <label for="source_lang">Enter Translation source language:</label><br>
     <input type="text" id="source_lang" name="source_lang"><br>
     <label for="translate_vendor">Enter Translation vendor</label><br>
-    <input type="text" id="translate_vendor" name="translate_vendor"><br>
+    <input type="text" id="translate_vendor" name="translate_vendor", value="google"><br>
     <label for="translate_key">Enter Translation API Key</label><br>
     <input type="text" id="translate_key" name="translate_key"><br>
     <input type="submit" value="Translate to Chinese">
     <a id="downloadSrtZhMergeButton" class="btn btn-primary" role="button" style="display: none;">Download zh SRT</a>
-        SRT Merged</a>
+</form>
+
+<h1>翻译源原始字幕</h1>
+<form action="/tts/" method="post" id="tts">
+    <label for="video_id">Enter YouTube Video ID to transcribe:</label><br>
+    <input type="text" id="video_id" name="video_id"><br>
+    <label for="tts_vendor">Enter TTS vendor</label><br>
+    <input type="text" id="tts_vendor" name="tts_vendor"><br>
+    <label for="tts_key">Enter TTS API Key</label><br>
+    <input type="text" id="tts_key" name="tts_key"><br>
+    <input type="submit" value="Generate TTS">
+    <a id="downloadTTSButton" class="btn btn-primary" role="button" style="display: none;">Download TTS</a>
 </form>
 
 <p id="serverResponse"></p>
@@ -138,6 +149,31 @@
                 },
                 error: function (response) {
                     $("#downloadSrtEnMergedButton").hide();
+                    $("#serverResponse").text(response.responseJSON.message);
+                }
+            });
+        });
+
+        $("#translateToZh").submit(function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: '/translate_to_zh',
+                type: 'post',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    "video_id": $("#video_id").val(),
+                    "source_lang": $("#source_lang").val(),
+                    "translate_vendor": $("#translate_vendor").val(),
+                    "translate_key": $("#translate_key").val()
+                }),
+                success: function (response) {
+                    $("#downloadSrtZhMergeButton").attr('href', '/srt_zh_merged/' + response.video_id);
+                    $("#downloadSrtZhMergeButton").show();
+
+                    $("#serverResponse").text(response.message);
+                },
+                error: function (response) {
+                    $("#downloadSrtZhMergeButton").hide();
                     $("#serverResponse").text(response.responseJSON.message);
                 }
             });
