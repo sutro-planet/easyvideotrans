@@ -25,9 +25,6 @@ import deepl
 import wave
 import math
 import struct
-import tkinter as tk
-from tkinter import filedialog
-from tkinter import messagebox
 from tools.trans_llm import TranslatorClass
 import tenacity
 from tools.merge_subtitle import SubtitleMerger
@@ -85,7 +82,7 @@ def download_youtube_video(video_id, fileNameAndPath):
     from pytube import YouTube
     YouTube(f'https://youtu.be/{video_id}', proxies=proxies).streams.first().download(filename=fileNameAndPath)
 
-def transcribeAudioEn(path, modelName="base.en", language="en",srtFilePathAndName="VIDEO_FILENAME.srt"):
+def transcribeAudioEn(logger, path, modelName="base.en", language="en",srtFilePathAndName="VIDEO_FILENAME.srt"):
 
     # 非静音检测阈值，单位为分贝，越小越严格
     NOT_SILENCE_THRESHOLD_DB = -30
@@ -98,11 +95,10 @@ def transcribeAudioEn(path, modelName="base.en", language="en",srtFilePathAndNam
         initial_prompt="简体"
 
     model = WhisperModel(modelName, device="cuda", compute_type="float16", download_root="faster-whisper_models", local_files_only=False)
-    print("Whisper model loaded.")
+    logger.info("Whisper model loaded.")
 
     # faster-whisper
     segments, _ = model.transcribe(audio=path,  language=language, word_timestamps=True, initial_prompt=initial_prompt)
-
     # 转换为srt的Subtitle对象
     index = 1
     subs = []
@@ -113,11 +109,6 @@ def transcribeAudioEn(path, modelName="base.en", language="en",srtFilePathAndNam
                 subtitle = srt.Subtitle(index, datetime.timedelta(seconds=word.start), datetime.timedelta(seconds=word.end), "")
             finalWord = word.word.strip()
             subtitle.end = datetime.timedelta(seconds=word.end)
-
-            # 避免ascii编码错误，不知道怎么写，以后再说吧
-            # bytes_s = bytes(finalWord, 'latin-1')  # Convert the string to bytes using latin-1 encoding
-            # finalWord = bytes_s.decode('latin-1')  # Decode the bytes to a string using utf-8 encoding
-            # finalWord = finalWord.encode('utf-8')
 
             # 一句结束。但是要特别排除小数点被误认为是一句结尾的情况。
             if (finalWord[-1] in END_INTERPUNCTION) and not (len(finalWord)>1 and finalWord[-2] in NUMBER_CHARACTERS):
@@ -142,8 +133,7 @@ def transcribeAudioEn(path, modelName="base.en", language="en",srtFilePathAndNam
         subs.append(subtitle)
         index += 1
 
-
-    print("Transcription complete.")
+    logger.info("Transcription complete.")
 
     # 重新校准字幕开头，以字幕开始时间后声音大于阈值的第一帧为准
     audio = wave.open(path, 'rb')
@@ -181,13 +171,14 @@ def transcribeAudioEn(path, modelName="base.en", language="en",srtFilePathAndNam
     
     content = srt.compose(subs)
     with open(srtFilePathAndName, "w", encoding="utf-8") as file:
+        print(f"write to file {srtFilePathAndName}, file {file}")
         file.write(content)
 
-    print("SRT file created.")
-    print("Output file: " + srtFilePathAndName)
+    logger.info("SRT file created.")
+    logger.info("Output file: " + srtFilePathAndName)
     return True
 
-def transcribeAudioZh(path, modelName="base.en", language="en",srtFilePathAndName="VIDEO_FILENAME.srt"):
+def transcribeAudioZh(logger, path, modelName="base.en", language="en",srtFilePathAndName="VIDEO_FILENAME.srt"):
     END_INTERPUNCTION = ["。", "！", "？", "…", "；", "，", "、", ",", ".", "!", "?", ";"]
     ENGLISH_AND_NUMBER_CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
@@ -225,7 +216,7 @@ def transcribeAudioZh(path, modelName="base.en", language="en",srtFilePathAndNam
     with open(srtFilePathAndName, "w", encoding="utf-8") as file:
         file.write(content)
 
-def srtSentanceMerge(sourceSrtFilePathAndName, OutputSrtFilePathAndName):
+def srtSentanceMerge(logger, sourceSrtFilePathAndName, OutputSrtFilePathAndName):
     srtContent = open(sourceSrtFilePathAndName, "r", encoding="utf-8").read()
     subGenerator = srt.parse(srtContent)
     subList = list(subGenerator)
@@ -233,8 +224,6 @@ def srtSentanceMerge(sourceSrtFilePathAndName, OutputSrtFilePathAndName):
         print("No subtitle found.")
         return False
     
-    diagnosisLog.write("\n<Sentence Merge Section>", False)
-
     subPorcessingIndex = 1
     subItemList = []
     subItemProcessing = None
@@ -248,7 +237,7 @@ def srtSentanceMerge(sourceSrtFilePathAndName, OutputSrtFilePathAndName):
         if endSentenceIndex != -1 and endSentenceIndex != len(subItem.content) - 1:
             logString = f"Warning: Sentence (index:{endSentenceIndex}) not end at the end of the subtitle.\n"
             logString += f"Content: {subItem.content}"
-            diagnosisLog.write(logString)
+            logger.info(logString)
     
         # 以后一个字幕，直接拼接送入就可以了
         if subItem == subList[-1]:

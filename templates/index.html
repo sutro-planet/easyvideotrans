@@ -31,16 +31,30 @@
         Background</a>
 </form>
 
-<h1>从英文音频中提取SRT</h1>
+<h1>从英文音频中提取原始源字幕</h1>
 <form action="/transcribe/" method="post" id="transcribeEnForm">
     <label for="video_id">Enter YouTube Video ID to transcribe:</label><br>
     <input type="text" id="video_id" name="video_id"><br>
     <input type="submit" value="Transcribe SRT from English">
-    <a id="downloadSrtEnButton" class="btn btn-primary" role="button" style="display: none;">Download SRT</a>
     <a id="downloadSrtEnMergedButton" class="btn btn-primary" role="button" style="display: none;">Download
         SRT Merged</a>
 </form>
 
+
+<h1>翻译源原始字幕</h1>
+<form action="/transhlate_to_zh/" method="post" id="transhlateToZh">
+    <label for="video_id">Enter YouTube Video ID to transcribe:</label><br>
+    <input type="text" id="video_id" name="video_id"><br>
+    <label for="source_lang">Enter Translation source language:</label><br>
+    <input type="text" id="source_lang" name="source_lang"><br>
+    <label for="translate_vendor">Enter Translation vendor</label><br>
+    <input type="text" id="translate_vendor" name="translate_vendor"><br>
+    <label for="translate_key">Enter Translation API Key</label><br>
+    <input type="text" id="translate_key" name="translate_key"><br>
+    <input type="submit" value="Translate to Chinese">
+    <a id="downloadSrtZhMergeButton" class="btn btn-primary" role="button" style="display: none;">Download zh SRT</a>
+        SRT Merged</a>
+</form>
 
 <p id="serverResponse"></p>
 <script>
@@ -116,9 +130,6 @@
                 contentType: 'application/json',
                 data: JSON.stringify({"video_id": $("#video_id").val()}),
                 success: function (response) {
-                    $("#downloadSrtEnButton").attr('href', '/srt_en/' + response.video_id);
-                    $("#downloadSrtEnButton").show();
-
                     $("#downloadSrtEnMergedButton").attr('href', '/srt_en_merged/' + response.video_id);
                     $("#downloadSrtEnMergedButton").show();
 
@@ -126,7 +137,6 @@
                     $("#serverResponse").text(response.message);
                 },
                 error: function (response) {
-                    $("#downloadSrtEnButton").hide();
                     $("#downloadSrtEnMergedButton").hide();
                     $("#serverResponse").text(response.responseJSON.message);
                 }

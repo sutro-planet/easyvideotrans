@@ -220,8 +220,8 @@ def transcribe(video_id):
             f'not found at {audio_no_bg_path}, please extract it first')}), 404
 
     try:
-        transcribeAudioEn(audio_no_bg_path, transcribe_model, "en", srtFilePathAndName=en_srt_path)
-        srtSentanceMerge(en_srt_path, en_srt_merged_path)
+        transcribeAudioEn(app.logger, path=audio_no_bg_path, modelName=transcribe_model, language="en", srtFilePathAndName=en_srt_path)
+        srtSentanceMerge(app.logger,en_srt_path, en_srt_merged_path)
 
         return jsonify({"message": log_info_return_str(
             f"Transcribed SRT from {audio_no_bg_fn} as {en_srt_fn} and {en_srt_merged_fn} successfully."),
@@ -256,3 +256,6 @@ def srt_en_merged_serve(video_id):
 
     return jsonify({"message": log_warning_return_str(
         f'Transcribed English SRT {en_srt_merged_fn} not found at {en_srt_merged_path}')}), 404
+
+
+
