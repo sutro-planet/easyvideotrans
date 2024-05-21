@@ -8,20 +8,23 @@ WORKDIR /app
 ADD . /app
 
 # Create a conda environment with the necessary packages
-RUN conda create -n pvtvzhen python=3.8
+RUN conda create -n pvtvzhen python=3.9
 
 # Make RUN commands use the new environment
 SHELL ["conda", "run", "-n", "pvtvzhen", "/bin/bash", "-c"]
 
-# Install Flask
-RUN pip install -r requirement.txt
+# Install dependencies
+RUN apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
 
-# Make port 80 available to the world outside this container
-EXPOSE 80
+# Make port 8080 available to the world outside this container
+EXPOSE 8080
 
 # Define environment variable
-ENV NAME World
+ENV FLASK_RUN_PORT 8080
+ENV FLASK_APP app.py
+ENV FLASK_DEBUG 1
 
 # Run app.py when the container launches
-CMD ["python", "app.py"]
-
+CMD [ "/bin/bash", "-c", "source activate pvtvzhen && python3 -m flask run --host=0.0.0.0" ]
