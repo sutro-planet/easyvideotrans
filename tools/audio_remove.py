@@ -1,5 +1,3 @@
-import os
-
 import librosa
 import numpy as np
 import soundfile as sf
@@ -9,12 +7,11 @@ from tqdm import tqdm
 from lib import dataset
 from lib import nets
 from lib import spec_utils
-from lib import utils
-
 
 AUDIO_REMOVE_DEVICE = "gpu"
 AUDIO_REMOVE_FFT_SIZE = 2048
 AUDIO_REMOVE_HOP_SIZE = 1024
+
 
 class Separator(object):
 
@@ -112,9 +109,9 @@ def audio_remove(audioFileNameAndPath, voiceFileNameAndPath, instrumentFileNameA
         device = device = torch.device('cuda:0')
     else:
         raise ValueError("Invalid device: {}".format(AUDIO_REMOVE_DEVICE))
-    
+
     print("Loading model " + AUDIO_REMOVE_DEVICE)
-    model = nets.CascadedNet(AUDIO_REMOVE_FFT_SIZE, AUDIO_REMOVE_HOP_SIZE, 32, 128)#模型参数
+    model = nets.CascadedNet(AUDIO_REMOVE_FFT_SIZE, AUDIO_REMOVE_HOP_SIZE, 32, 128)  # 模型参数
     model.load_state_dict(torch.load(modelNameAndPath, map_location='cpu'))
     model.to(device)
     print("Model loaded")
@@ -151,8 +148,9 @@ def audio_remove(audioFileNameAndPath, voiceFileNameAndPath, instrumentFileNameA
     wave = spec_utils.spectrogram_to_wave(v_spec, hop_length=AUDIO_REMOVE_HOP_SIZE)
     print('done')
     sf.write(voiceFileNameAndPath, wave.T, sr)
-    
 
 
 if __name__ == '__main__':
-    audio_remove("d:\\document\\AI_Work\\whisper\\videos\\proxy\\RXXRguaHZs0.wav", "d:\\document\\AI_Work\\whisper\\videos\\proxy\\RXXRguaHZs0_voice.wav", "d:\\document\\AI_Work\\whisper\\videos\\proxy\\RXXRguaHZs0_instrument.wav")
+    audio_remove("d:\\document\\AI_Work\\whisper\\videos\\proxy\\RXXRguaHZs0.wav",
+                 "d:\\document\\AI_Work\\whisper\\videos\\proxy\\RXXRguaHZs0_voice.wav",
+                 "d:\\document\\AI_Work\\whisper\\videos\\proxy\\RXXRguaHZs0_instrument.wav")

@@ -1,13 +1,14 @@
 import pysubs2
 
+
 class SubtitleMerger:
-    def __init__(self, 
-                 chinese_sub_path, 
-                 english_sub_path, 
+    def __init__(self,
+                 chinese_sub_path,
+                 english_sub_path,
                  output_path,
-                 chinese_font_name="Arial", 
+                 chinese_font_name="Arial",
                  chinese_font_size=10,
-                 english_font_name="Arial", 
+                 english_font_name="Arial",
                  english_font_size=6):
         self.chinese_sub_path = chinese_sub_path
         self.english_sub_path = english_sub_path
@@ -26,7 +27,7 @@ class SubtitleMerger:
         # Define subtitle styles
         chinese_style = 'ChineseStyle'
         merged_subs.styles[chinese_style] = pysubs2.SSAStyle(
-            fontname=self.chinese_font_name, 
+            fontname=self.chinese_font_name,
             fontsize=self.chinese_font_size,
             primarycolor=pysubs2.Color(255, 255, 255),
             outlinecolor=pysubs2.Color(0, 0, 0),
@@ -57,15 +58,15 @@ class SubtitleMerger:
 
 def main():
     # Example usage
-    merger = SubtitleMerger(chinese_sub_path=r"C:\Users\le\Videos\pytvzhen\conver\eMlx5fFNoYc\eMlx5fFNoYc_zh_merge.srt", 
+    merger = SubtitleMerger(chinese_sub_path=r"C:\Users\le\Videos\pytvzhen\conver\eMlx5fFNoYc\eMlx5fFNoYc_zh_merge.srt",
                             english_sub_path=r"C:\Users\le\Videos\pytvzhen\conver\eMlx5fFNoYc\eMlx5fFNoYc_en_merge.srt",
                             output_path=r"C:\Users\le\Videos\pytvzhen\conver\eMlx5fFNoYc\merged_subtitles.ass",
-                            chinese_font_name="Arial", 
+                            chinese_font_name="Arial",
                             chinese_font_size=10,
-                            english_font_name="Arial", 
+                            english_font_name="Arial",
                             english_font_size=6)
     merger.merge_subtitles()
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     main()

@@ -6,6 +6,7 @@ from functools import wraps
 from flask import Flask, request, jsonify, render_template, send_from_directory
 import zipfile
 import shutil
+import uuid
 
 from tools.audio_remove import audio_remove
 from work_space import transcribeAudioEn, srtSentanceMerge, srtFileGoogleTran, srtFileDeeplTran, srtFileGPTTran, \
@@ -179,7 +180,7 @@ def audio_serve(video_id):
     video_fn = f'{video_id}.mp4'
     audio_fn = f'{video_id}.wav'
 
-    video_path, audio_path = os.path.join(output_path, video_fn), os.path.join(output_path, audio_fn)
+    _, audio_path = os.path.join(output_path, video_fn), os.path.join(output_path, audio_fn)
 
     if os.path.exists(audio_path):
         return send_from_directory(output_path, audio_fn, as_attachment=True)
@@ -194,10 +195,10 @@ def remove_audio_bg(video_id):
     audio_fn = f'{video_id}.wav'
     audio_no_bg_fn, audio_bg_fn = f'{video_id}_no_bg.wav', f'{video_id}_bg.wav'
 
-    video_path, audio_path, audio_no_bg_path, audio_bg_fn_path = (os.path.join(output_path, video_fn),
-                                                                  os.path.join(output_path, audio_fn),
-                                                                  os.path.join(output_path, audio_no_bg_fn),
-                                                                  os.path.join(output_path, audio_bg_fn))
+    _, audio_path, audio_no_bg_path, audio_bg_fn_path = (os.path.join(output_path, video_fn),
+                                                         os.path.join(output_path, audio_fn),
+                                                         os.path.join(output_path, audio_no_bg_fn),
+                                                         os.path.join(output_path, audio_bg_fn))
 
     if os.path.exists(audio_no_bg_path) and os.path.exists(audio_bg_fn_path):
         return jsonify({"message": log_info_return_str(
@@ -318,7 +319,7 @@ def transhlate_to_zh(video_id):
     en_srt_merged_path = os.path.join(output_path, en_srt_merged_fn)
     zh_srt_merged_path = os.path.join(output_path, zh_srt_merged_fn)
 
-    if os.path.exists(en_srt_merged_path) == False:
+    if not os.path.exists(en_srt_merged_path):
         return jsonify({"message": log_warning_return_str(
             f'English SRT {en_srt_merged_fn} not found at {en_srt_merged_path}')}), 404
 
@@ -343,7 +344,7 @@ def transhlate_to_zh(video_id):
             else:
                 ret = srtFileDeeplTran(logger=app.logger, sourceFileNameAndPath=en_srt_merged_path,
                                        outputFileNameAndPath=zh_srt_merged_path, key=api_key)
-                if ret == True:
+                if ret:
                     return jsonify({"message": log_info_return_str(
                         f"using deepl translate to translate SRT from {en_srt_merged_fn} to {zh_srt_merged_fn} successfully."),
                         "video_id": video_id}), 200
@@ -357,7 +358,7 @@ def transhlate_to_zh(video_id):
                 ret = srtFileGPTTran(logger=app.logger, model=translateVendor, proxies=None,
                                      sourceFileNameAndPath=en_srt_merged_path, outputFileNameAndPath=zh_srt_merged_path,
                                      key=api_key)
-                if ret == True:
+                if ret:
                     return jsonify({"message": log_info_return_str(
                         f"using {translateVendor} translate to translate SRT from {en_srt_merged_fn} to {zh_srt_merged_fn} successfully."),
                         "video_id": video_id}), 200
@@ -395,12 +396,12 @@ def voice_connect(video_id):
     warning_log_fn = video_id + "_connect_warning.log"
     warning_log_path = os.path.join(output_path, warning_log_fn)
 
-    if os.path.exists(voiceDir) == False:
+    if not os.path.exists(voiceDir):
         return jsonify({"message": log_warning_return_str(
             f'Voice directory {voiceDir} not found at {output_path}')}), 404
 
     ret = voiceConnect(app.logger, voiceDir, voice_connect_path, warning_log_path)
-    if ret == True:
+    if ret:
         return jsonify({"message": log_info_return_str(
             f"Voice connect {voice_connect_fn} successfully."),
             "video_id": video_id}), 200
@@ -418,6 +419,7 @@ def voice_connect_log_serve(video_id):
 
     return jsonify({"message": log_warning_return_str(
         f'Voice connect {warning_log_path} not found at {warning_log_path}')}), 404
+
 
 @app.route('/voice_connect/<video_id>', methods=['GET'])
 def voice_connect_serve(video_id):
@@ -438,29 +440,30 @@ def tts(video_id):
     video_id = data['video_id']
     srt_fn = f'{video_id}_zh_merged.srt'
     srt_path = os.path.join(output_path, srt_fn)
-    tts_dir = os.path.join(output_path, video_id+"_zh_source")
+    tts_dir = os.path.join(output_path, video_id + "_zh_source")
     charater = data['tts_character']
 
-    if os.path.exists(srt_path) == False:
+    if not os.path.exists(srt_path):
         return jsonify({"message": log_warning_return_str(
             f'Chinese SRT {srt_fn} not found at {output_path}')}), 404
 
-    if os.path.exists(tts_dir) == True:
+    if os.path.exists(tts_dir):
         # delete old tts dir
         shutil.rmtree(tts_dir)
-    
+
     try:
         ret = srtToVoiceEdge(app.logger, srt_path, tts_dir, charater)
-        if ret == True:
+        if ret:
             return jsonify({"message": log_info_return_str(
-                    f"tts success."),
-                    "video_id": video_id}), 200
+                "tts success."),
+                "video_id": video_id}), 200
         else:
             return jsonify({"message": log_warning_return_str("tts failed.")}), 404
     except Exception as e:
         print(e)
-   
+
     return jsonify({"message": log_warning_return_str("tts failed.")}), 404
+
 
 @app.route('/tts/<video_id>', methods=['GET'])
 def tts_serve(video_id):
@@ -468,7 +471,7 @@ def tts_serve(video_id):
     tts_zip_fn = video_id + "_zh_source.zip"
     tts_zip_path = os.path.join(output_path, tts_zip_fn)
     print("tts_dir", tts_dir)
-    if os.path.exists(tts_dir) == False:
+    if not os.path.exists(tts_dir):
         return jsonify({"message": log_warning_return_str(
             f'Voice directory {tts_dir} not found at {output_path}')}), 404
 
@@ -502,17 +505,16 @@ def video_preview(video_id):
     video_out_path = os.path.join(output_path, video_out_fn)
 
     # 检查音频
-    if os.path.exists(voice_connect_path) == False or os.path.exists(audio_bg_path) == False:
+    if (not os.path.exists(voice_connect_path)) or (not os.path.exists(audio_bg_path)):
         return jsonify({"message": log_warning_return_str(
             f'Chinese Voice {voice_connect_fn} not found at {output_path}')}), 404
 
     # 检查视频
-    if os.path.exists(video_save_path) == False and os.path.exists(video_fhd_save_path) == False:
+    if (not os.path.exists(video_save_path)) and (not os.path.exists(video_fhd_save_path)):
         return jsonify({"message": log_warning_return_str(
-            f"No video found")}), 404
+            "No video found")}), 404
 
     # 选择最佳分辨率的视频
-    video_source_path = ""
     if os.path.exists(video_fhd_save_path):
         video_source_path = video_fhd_save_path
     else:
@@ -521,7 +523,7 @@ def video_preview(video_id):
     # 生成视频预览
     ret = zhVideoPreview(app.logger, video_source_path, voice_connect_path, audio_bg_path,
                          "暂时没有处理字幕文件，所以随便写", video_out_path)
-    if ret == True:
+    if ret:
         return jsonify({"message": log_info_return_str(
             f"Video preview {video_fhd} successfully."),
             "video_id": video_id}), 200
