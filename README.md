@@ -203,7 +203,7 @@ models目录下提供了一个基本可用的模型baseline.pth
  - [moviepy](https://github.com/Zulko/moviepy)
 
 
-# 网页版开发 (施工中)
+# 网页版开发
 
 在本地目录，跑Flask服务器
 
@@ -212,4 +212,15 @@ flask run --host=0.0.0.0 --debug
 ```
 
 然后浏览器打开http://127.0.0.1:5000.
+
+构建Docker镜像
+
+```shell
+docker build -t hanfa/pytvzhen-web:latest .
+```
+
+运行Docker容器
+```shell
+docker run --rm -p 8080:8080 -v output:/app/output hanfa/pytvzhen-web:latest
+```
 

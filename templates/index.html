@@ -2,47 +2,217 @@
 <html>
 <head>
     <title>Pytvzhen Downloader</title>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 </head>
 <body>
-<h1>使用ID下载Youtube视频</h1>
-<form action="/yt_download" method="post" id="downloadForm">
-    <label for="video_id">Enter YouTube Video ID:</label><br>
-    <input type="text" id="video_id" name="video_id"><br>
-    <input type="submit" value="Download">
-    <a id="downloadButton" class="btn btn-primary" role="button" style="display: none;">Download Video</a>
-</form>
 
-<h1>提取Youtube音频</h1>
-<form action="/extra_audio/" method="post" id="extractAudioForm">
-    <label for="video_id">Enter YouTube Video ID to extract Audio:</label><br>
-    <input type="text" id="video_id" name="video_id"><br>
-    <input type="submit" value="ExtractAudio">
-    <a id="extractAudioButton" class="btn btn-primary" role="button" style="display: none;">Extract Audio</a>
-</form>
+<div class="container">
 
-<h1>去除Youtube音频背景音乐</h1>
-<form action="/remove_audio_bg/" method="post" id="removeBackgroundMusicForm">
-    <label for="video_id">Enter YouTube Video ID to extract Audio:</label><br>
-    <input type="text" id="video_id" name="video_id"><br>
-    <input type="submit" value="Extract Voice and Background Music">
-    <a id="downloadVoiceButton" class="btn btn-primary" role="button" style="display: none;">Download Voice</a>
-    <a id="downloadBackgroundButton" class="btn btn-primary" role="button" style="display: none;">Download
-        Background</a>
-</form>
-
-<h1>从英文音频中提取SRT</h1>
-<form action="/transcribe/" method="post" id="transcribeEnForm">
-    <label for="video_id">Enter YouTube Video ID to transcribe:</label><br>
-    <input type="text" id="video_id" name="video_id"><br>
-    <input type="submit" value="Transcribe SRT from English">
-    <a id="downloadSrtEnButton" class="btn btn-primary" role="button" style="display: none;">Download SRT</a>
-    <a id="downloadSrtEnMergedButton" class="btn btn-primary" role="button" style="display: none;">Download
-        SRT Merged</a>
-</form>
+    <!-- Modal -->
+    <div class="modal fade" id="responseModal" tabindex="-1" role="dialog" aria-labelledby="responseModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="responseModalLabel">Server Response</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="serverResponse">
+                    <!-- Server response will be inserted here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
 
-<p id="serverResponse"></p>
+    <h1 class="text-center my-4">使用ID下载Youtube视频或上传视频</h1>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">使用ID下载Youtube视频</h5>
+
+                    <form action="/yt_download" method="post" id="downloadForm">
+                        <label for="video_id">Enter YouTube Video ID:</label><br>
+                        <input type="text" id="video_id" name="video_id"><br>
+                        <input type="submit" value="Download">
+                        <a id="downloadButton" class="btn btn-primary" role="button" style="display: none;">Download
+                            Video</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">上传你的视频</h5>
+                    <form action="/video_upload" method="post" enctype="multipart/form-data" id="uploadForm">
+                        <div class="form-group">
+                            <input type="file" class="form-control-file" name="file" accept=".mp4">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Upload</button>
+                    </form>
+                    <div class="progress mt-3">
+                        <div id="uploadProgressBar" class="progress-bar" role="progressbar" style="width: 0%;"
+                             aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h1 class="text-center my-4">提取Youtube音频</h1>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <form action="/extra_audio/" method="post" id="extractAudioForm">
+                        <label for="video_id">Enter YouTube Video ID to extract Audio:</label><br>
+                        <input type="text" id="video_id" name="video_id"><br>
+                        <input type="submit" value="ExtractAudio">
+                        <a id="extractAudioButton" class="btn btn-primary" role="button" style="display: none;">Extract
+                            Audio</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <h1 class="text-center my-4">去除Youtube音频背景音乐</h1>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <form action="/remove_audio_bg/" method="post" id="removeBackgroundMusicForm">
+                        <label for="video_id">Enter YouTube Video ID to extract Audio:</label><br>
+                        <input type="text" id="video_id" name="video_id"><br>
+                        <input type="submit" value="Extract Voice and Background Music">
+                        <a id="downloadVoiceButton" class="btn btn-primary" role="button" style="display: none;">Download
+                            Voice</a>
+                        <a id="downloadBackgroundButton" class="btn btn-primary" role="button" style="display: none;">Download
+                            Background</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h1 class="text-center my-4">从英文音频中提取原始源字幕</h1>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <form action="/transcribe/" method="post" id="transcribeEnForm">
+                        <label for="video_id">Enter YouTube Video ID to transcribe:</label><br>
+                        <input type="text" id="video_id" name="video_id"><br>
+                        <input type="submit" value="Transcribe SRT from English">
+                        <a id="downloadSrtEnMergedButton" class="btn btn-primary" role="button" style="display: none;">Download
+                            SRT Merged</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <h1 class="text-center my-4">翻译原始字幕</h1>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <form action="/translate_to_zh/" method="post" id="translateToZh">
+                        <label for="video_id">Enter YouTube Video ID to transcribe:</label><br>
+                        <input type="text" id="video_id" name="video_id"><br>
+                        <label for="source_lang">Enter Translation source language:</label><br>
+                        <input type="text" id="source_lang" name="source_lang"><br>
+                        <label for="translate_vendor">Enter Translation vendor</label><br>
+                        <input type="text" id="translate_vendor" name="translate_vendor" value="google"><br>
+                        <label for="translate_key">Enter Translation API Key</label><br>
+                        <input type="text" id="translate_key" name="translate_key"><br>
+                        <input type="submit" value="Translate to Chinese">
+                        <a id="downloadSrtZhMergeButton" class="btn btn-primary" role="button" style="display: none;">Download
+                            zh SRT</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <h1 class="text-center my-4">中文字幕配音</h1>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <form action="/tts/" method="post" id="tts">
+                        <label for="video_id">Enter YouTube Video ID to transcribe:</label><br>
+                        <input type="text" id="video_id" name="video_id"><br>
+                        <label for="tts_vendor">Enter TTS vendor</label><br>
+                        <input type="text" id="tts_vendor" name="tts_vendor" value="edge"><br>
+                        <label for="tts_key">Enter TTS API Key</label><br>
+                        <input type="text" id="tts_key" name="tts_key"><br>
+                        <label for="tts_character">Enter TTS Character</label><br>
+                        <input type="text" id="tts_character" name="tts_character" value="zh-CN-XiaoyiNeural"><br>
+                        <input type="submit" value="Generate TTS">
+                        <a id="downloadTTSButton" class="btn btn-primary" role="button" style="display: none;">Download
+                            TTS</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h1 class="text-center my-4">语音连接</h1>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <form action="/voice_connect/" method="post" id="voiceConnect">
+                        <label for="video_id">Enter YouTube Video ID to transcribe:</label><br>
+                        <input type="text" id="video_id" name="video_id"><br>
+                        <input type="submit" value="Voice connect">
+                        <a id="downloadvoiceConnectButton" class="btn btn-primary" role="button" style="display: none;">Download
+                            Connected
+                            Voice</a>
+                        <a id="downloadvoiceConnectLogButton" class="btn btn-primary" role="button" style="display: none;">Download
+                            Connected
+                            Voice log</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h1 class="text-center my-4">渲染预览视频</h1>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <form action="/video_preview/" method="post" id="videoPreview">
+                        <label for="video_id">Enter YouTube Video ID to transcribe:</label><br>
+                        <input type="text" id="video_id" name="video_id"><br>
+                        <input type="submit" value="video preview">
+                        <a id="downloadViewoPreviewButton" class="btn btn-primary" role="button" style="display: none;">Download
+                            Preview
+                            Video</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     $(document).ready(function () {
         $("#downloadForm").submit(function (e) {
@@ -51,15 +221,47 @@
                 url: '/yt_download',
                 type: 'post',
                 contentType: 'application/json',
-                data: JSON.stringify({"video_id": $("#video_id").val()}),
+                data: JSON.stringify({"video_id": $("#downloadForm input[id=video_id]").val()}),
                 success: function (response) {
                     $("#serverResponse").text(response.message);
+                    $("#responseModal").modal('show');
                     $("#downloadButton").attr('href', '/yt/' + response.video_id);
                     $("#downloadButton").show();
                 },
                 error: function (response) {
                     $("#downloadButton").hide();
                     $("#serverResponse").text(response.responseJSON.message);
+                    $("#responseModal").modal('show');
+                }
+            });
+        });
+
+        $("#uploadForm").submit(function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: '/video_upload',
+                type: 'post',
+                data: new FormData(this),
+                contentType: false,
+                processData: false,
+                xhr: function () {
+                    var xhr = new window.XMLHttpRequest();
+                    xhr.upload.addEventListener('progress', function (evt) {
+                        if (evt.lengthComputable) {
+                            var percentComplete = evt.loaded / evt.total;
+                            percentComplete = parseInt(percentComplete * 100);
+                            $('#uploadProgressBar').css('width', percentComplete + '%').attr('aria-valuenow', percentComplete).text(percentComplete + '%');
+                        }
+                    }, false);
+                    return xhr;
+                },
+                success: function (response) {
+                    $("#serverResponse").text(response.message);
+                    $("#responseModal").modal('show');
+                },
+                error: function (response) {
+                    $("#serverResponse").text(response.responseJSON.message);
+                    $("#responseModal").modal('show');
                 }
             });
         });
@@ -71,15 +273,17 @@
                 url: '/extra_audio',
                 type: 'post',
                 contentType: 'application/json',
-                data: JSON.stringify({"video_id": $("#video_id").val()}),
+                data: JSON.stringify({"video_id": $("#extractAudioForm input[id=video_id]").val()}),
                 success: function (response) {
                     $("#extractAudioButton").attr('href', '/audio/' + response.video_id);
                     $("#extractAudioButton").show();
                     $("#serverResponse").text(response.message);
+                    $("#responseModal").modal('show');
                 },
                 error: function (response) {
                     $("#extractAudioButton").hide();
                     $("#serverResponse").text(response.responseJSON.message);
+                    $("#responseModal").modal('show');
                 }
             });
         });
@@ -90,7 +294,7 @@
                 url: '/remove_audio_bg',
                 type: 'post',
                 contentType: 'application/json',
-                data: JSON.stringify({"video_id": $("#video_id").val()}),
+                data: JSON.stringify({"video_id": $("#removeBackgroundMusicForm input[id=video_id]").val()}),
                 success: function (response) {
                     $("#downloadVoiceButton").attr('href', '/audio_no_bg/' + response.video_id);
                     $("#downloadVoiceButton").show();
@@ -99,10 +303,12 @@
                     $("#downloadBackgroundButton").show();
 
                     $("#serverResponse").text(response.message);
+                    $("#responseModal").modal('show');
                 },
                 error: function (response) {
                     $("#downloadBackgroundButton").hide();
                     $("#serverResponse").text(response.responseJSON.message);
+                    $("#responseModal").modal('show');
                 }
             });
         });
@@ -114,25 +320,120 @@
                 url: '/transcribe',
                 type: 'post',
                 contentType: 'application/json',
-                data: JSON.stringify({"video_id": $("#video_id").val()}),
+                data: JSON.stringify({"video_id": $("#transcribeEnForm input[id=video_id]").val()}),
                 success: function (response) {
-                    $("#downloadSrtEnButton").attr('href', '/srt_en/' + response.video_id);
-                    $("#downloadSrtEnButton").show();
-
                     $("#downloadSrtEnMergedButton").attr('href', '/srt_en_merged/' + response.video_id);
                     $("#downloadSrtEnMergedButton").show();
 
 
                     $("#serverResponse").text(response.message);
+                    $("#responseModal").modal('show');
                 },
                 error: function (response) {
-                    $("#downloadSrtEnButton").hide();
                     $("#downloadSrtEnMergedButton").hide();
                     $("#serverResponse").text(response.responseJSON.message);
+                    $("#responseModal").modal('show');
                 }
             });
         });
 
+        $("#translateToZh").submit(function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: '/translate_to_zh',
+                type: 'post',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    "video_id": $("#translateToZh input[id=video_id]").val(),
+                    "source_lang": $("#translateToZh input[id=source_lang]").val(),
+                    "translate_vendor": $("#translateToZh input[id=translate_vendor]").val(),
+                    "translate_key": $("#translateToZh input[id=translate_key]").val()
+                }),
+                success: function (response) {
+                    $("#downloadSrtZhMergeButton").attr('href', '/srt_zh_merged/' + response.video_id);
+                    $("#downloadSrtZhMergeButton").show();
+
+                    $("#serverResponse").text(response.message);
+                    $("#responseModal").modal('show');
+                },
+                error: function (response) {
+                    $("#downloadSrtZhMergeButton").hide();
+                    $("#serverResponse").text(response.responseJSON.message);
+                    $("#responseModal").modal('show');
+                }
+            });
+        });
+
+        $("#tts").submit(function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: '/tts',
+                type: 'post',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    "video_id": $("#tts input[id=video_id]").val(),
+                    "tts_vendor": $("#tts input[id=tts_vendor]").val(),
+                    "tts_key": $("#tts input[id=tts_key]").val(),
+                    "tts_character": $("#tts input[id=tts_character]").val()
+                }),
+                success: function (response) {
+                    $("#downloadTTSButton").attr('href', '/tts/' + response.video_id);
+                    $("#downloadTTSButton").show();
+
+                    $("#serverResponse").text(response.message);
+                    $("#responseModal").modal('show');
+                },
+                error: function (response) {
+                    $("#downloadTTSButton").hide();
+                    $("#serverResponse").text(response.responseJSON.message);
+                    $("#responseModal").modal('show');
+                }
+            });
+        });
+
+        $("#voiceConnect").submit(function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: '/voice_connect',
+                type: 'post',
+                contentType: 'application/json',
+                data: JSON.stringify({"video_id": $("#voiceConnect input[id=video_id]").val()}),
+                success: function (response) {
+                    $("#downloadvoiceConnectButton").attr('href', '/voice_connect/' + response.video_id);
+                    $("#downloadvoiceConnectButton").show();
+                    $("#downloadvoiceConnectLogButton").attr('href', '/voice_connect_log/' + response.video_id);
+                    $("#downloadvoiceConnectLogButton").show();
+                    $("#serverResponse").text(response.message);
+                    $("#responseModal").modal('show');
+                },
+                error: function (response) {
+                    $("#downloadvoiceConnectButton").hide();
+                    $("#serverResponse").text(response.responseJSON.message);
+
+                }
+            });
+        });
+
+        $("#videoPreview").submit(function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: '/video_preview',
+                type: 'post',
+                contentType: 'application/json',
+                data: JSON.stringify({"video_id": $("#videoPreview [id=video_id]").val()}),
+                success: function (response) {
+                    $("#downloadViewoPreviewButton").attr('href', '/video_preview/' + response.video_id);
+                    $("#downloadViewoPreviewButton").show();
+                    $("#serverResponse").text(response.message);
+                    $("#responseModal").modal('show');
+                },
+                error: function (response) {
+                    $("#downloadViewoPreviewButton").hide();
+                    $("#serverResponse").text(response.responseJSON.message);
+                    $("#responseModal").modal('show');
+                }
+            });
+        });
     });
 </script>
 </body>
