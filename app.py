@@ -9,7 +9,7 @@ import shutil
 
 from tools.audio_remove import audio_remove
 from work_space import transcribeAudioEn, srtSentanceMerge, srtFileGoogleTran, srtFileDeeplTran, srtFileGPTTran, \
-    voiceConnect, zhVideoPreview
+    voiceConnect, zhVideoPreview, srtToVoiceEdge
 
 from werkzeug.utils import secure_filename
 
