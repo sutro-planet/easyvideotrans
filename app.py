@@ -7,6 +7,8 @@ from flask import Flask, request, jsonify, render_template, send_from_directory
 import zipfile
 import shutil
 
+from celery import Celery
+
 from tools.audio_remove import audio_remove
 from work_space import transcribeAudioEn, srtSentanceMerge, srtFileGoogleTran, srtFileDeeplTran, srtFileGPTTran, srtToVoiceEdge, voiceConnect, zhVideoPreview
 
