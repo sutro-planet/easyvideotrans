@@ -392,12 +392,14 @@ def voice_connect(video_id):
     voiceDir = os.path.join(output_path, video_id + "_zh_source")
     voice_connect_fn = video_id + "_zh.wav"
     voice_connect_path = os.path.join(output_path, voice_connect_fn)
+    warning_log_fn = video_id + "_connect_warning.log"
+    warning_log_path = os.path.join(output_path, warning_log_fn)
 
     if os.path.exists(voiceDir) == False:
         return jsonify({"message": log_warning_return_str(
             f'Voice directory {voiceDir} not found at {output_path}')}), 404
 
-    ret = voiceConnect(app.logger, voiceDir, voice_connect_path)
+    ret = voiceConnect(app.logger, voiceDir, voice_connect_path, warning_log_path)
     if ret == True:
         return jsonify({"message": log_info_return_str(
             f"Voice connect {voice_connect_fn} successfully."),
@@ -405,6 +407,17 @@ def voice_connect(video_id):
     else:
         return jsonify({"message": log_warning_return_str("Voice connect failed.")}), 404
 
+
+@app.route('/voice_connect_log/<video_id>', methods=['GET'])
+def voice_connect_log_serve(video_id):
+    warning_log_fn = video_id + "_connect_warning.log"
+    warning_log_path = os.path.join(output_path, warning_log_fn)
+
+    if os.path.exists(warning_log_path):
+        return send_from_directory(output_path, warning_log_fn, as_attachment=True)
+
+    return jsonify({"message": log_warning_return_str(
+        f'Voice connect {warning_log_path} not found at {warning_log_path}')}), 404
 
 @app.route('/voice_connect/<video_id>', methods=['GET'])
 def voice_connect_serve(video_id):

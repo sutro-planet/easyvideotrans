@@ -185,6 +185,9 @@
                         <a id="downloadvoiceConnectButton" class="btn btn-primary" role="button" style="display: none;">Download
                             Connected
                             Voice</a>
+                        <a id="downloadvoiceConnectLogButton" class="btn btn-primary" role="button" style="display: none;">Download
+                            Connected
+                            Voice log</a>
                     </form>
                 </div>
             </div>
@@ -398,6 +401,8 @@
                 success: function (response) {
                     $("#downloadvoiceConnectButton").attr('href', '/voice_connect/' + response.video_id);
                     $("#downloadvoiceConnectButton").show();
+                    $("#downloadvoiceConnectLogButton").attr('href', '/voice_connect_log/' + response.video_id);
+                    $("#downloadvoiceConnectLogButton").show();
                     $("#serverResponse").text(response.message);
                     $("#responseModal").modal('show');
                 },
