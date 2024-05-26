@@ -5,9 +5,13 @@ from moviepy.editor import VideoFileClip
 from functools import wraps
 from flask import Flask, request, jsonify, render_template, send_from_directory
 import zipfile
+import uuid
 
 from tools.audio_remove import audio_remove
-from work_space import transcribeAudioEn, srtSentanceMerge, srtFileGoogleTran, srtFileDeeplTran, srtFileGPTTran, srtToVoiceEdge, voiceConnect, zhVideoPreview
+from work_space import transcribeAudioEn, srtSentanceMerge, srtFileGoogleTran, srtFileDeeplTran, srtFileGPTTran, \
+    voiceConnect, zhVideoPreview
+
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
@@ -55,6 +59,47 @@ def index():
     return render_template('index.html')
 
 
+ALLOWED_EXTENSIONS = {'mp4'}
+
+
+def video_extension_allowed(filename):
+    return '.' in filename and \
+        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def video_extension(filename):
+    return filename.rsplit('.', 1)[1].lower()
+
+
+def unique_video_fn_with_extension(extension):
+    video_id = str(uuid.uuid4())
+    return video_id, video_id + '.' + extension
+
+
+@app.route('/video_upload', methods=['POST'])
+def video_upload():
+    # check if the post request has the file part
+    if 'file' not in request.files:
+        return jsonify(error='No file part in the POST request'), 400
+
+    file = request.files['file']
+    # if user does not select file, browser also
+    # submit an empty part without filename
+    if file.filename == '':
+        return jsonify(error='No selected file from frontend'), 400
+
+    if file and video_extension_allowed(file.filename):
+        filename = secure_filename(file.filename)
+        file_ext = video_extension(filename)
+        video_id, video_fn = unique_video_fn_with_extension(file_ext)
+
+        file.save(os.path.join(output_path, video_fn))
+        return jsonify({"message": log_info_return_str(f"Video {file.filename} uploaded as {video_fn}"),
+                        "video_id": video_id})
+    else:
+        return jsonify({"message", log_error_return_str(f"Video upload failed: {file.filename} extension not allowed")})
+
+
 @app.route('/yt_download', methods=['POST'])
 @require_video_id_from_post_request
 def yt_download(video_id):
@@ -71,17 +116,18 @@ def yt_download(video_id):
         # 下载标清视频
         if not os.path.exists(video_save_path):
             yt = YouTube(f'https://www.youtube.com/watch?v={video_id}', proxies=None)
-            video  = yt.streams.filter(progressive=True, file_extension='mp4').order_by('resolution').asc().first()
+            video = yt.streams.filter(progressive=True, file_extension='mp4').order_by('resolution').asc().first()
             video.download(output_path=output_path, filename=video_fn)
 
         # 下载高清视频
         if not os.path.exists(video_fhd_save_path):
             yt = YouTube(f'https://www.youtube.com/watch?v={video_id}', proxies=None)
-            video  = yt.streams.filter(progressive=False, file_extension='mp4').order_by('resolution').desc().first()
+            video = yt.streams.filter(progressive=False, file_extension='mp4').order_by('resolution').desc().first()
             video.download(output_path=output_path, filename=video_fhd)
 
-        return jsonify({"message": log_info_return_str(f"Download video {video_id} and {video_fhd} to {output_path} successfully."),
-                        "video_id": video_id}), 200
+        return jsonify({"message": log_info_return_str(
+            f"Download video {video_id} and {video_fhd} to {output_path} successfully."),
+            "video_id": video_id}), 200
     except Exception as e:
         exception = e
 
@@ -221,8 +267,9 @@ def transcribe(video_id):
             f'not found at {audio_no_bg_path}, please extract it first')}), 404
 
     try:
-        transcribeAudioEn(app.logger, path=audio_no_bg_path, modelName=transcribe_model, language="en", srtFilePathAndName=en_srt_path)
-        srtSentanceMerge(app.logger,en_srt_path, en_srt_merged_path)
+        transcribeAudioEn(app.logger, path=audio_no_bg_path, modelName=transcribe_model, language="en",
+                          srtFilePathAndName=en_srt_path)
+        srtSentanceMerge(app.logger, en_srt_path, en_srt_merged_path)
 
         return jsonify({"message": log_info_return_str(
             f"Transcribed SRT from {audio_no_bg_fn} as {en_srt_fn} and {en_srt_merged_fn} successfully."),
@@ -280,32 +327,36 @@ def transhlate_to_zh(video_id):
         return jsonify({"message": log_warning_return_str("Unsupported translate vendor.")}), 404
 
     try:
-        if translateVendor ==  "google":
-            ret = srtFileGoogleTran(logger=app.logger, sourceFileNameAndPath=en_srt_merged_path, outputFileNameAndPath=zh_srt_merged_path)
-            if ret == True:
+        if translateVendor == "google":
+            ret = srtFileGoogleTran(logger=app.logger, sourceFileNameAndPath=en_srt_merged_path,
+                                    outputFileNameAndPath=zh_srt_merged_path)
+            if ret:
                 return jsonify({"message": log_info_return_str(
                     f"using google translate to translate SRT from {en_srt_merged_fn} to {zh_srt_merged_fn} successfully."),
                     "video_id": video_id}), 200
             else:
                 return jsonify({"message": log_warning_return_str("Google translate failed.")}), 404
-            
-        elif translateVendor ==  "deepl":
+
+        elif translateVendor == "deepl":
             if api_key == "":
                 return jsonify({"message": log_warning_return_str("Missing translate key.")}), 404
             else:
-                ret = srtFileDeeplTran(logger=app.logger, sourceFileNameAndPath=en_srt_merged_path, outputFileNameAndPath=zh_srt_merged_path, key=api_key)
+                ret = srtFileDeeplTran(logger=app.logger, sourceFileNameAndPath=en_srt_merged_path,
+                                       outputFileNameAndPath=zh_srt_merged_path, key=api_key)
                 if ret == True:
                     return jsonify({"message": log_info_return_str(
                         f"using deepl translate to translate SRT from {en_srt_merged_fn} to {zh_srt_merged_fn} successfully."),
                         "video_id": video_id}), 200
                 else:
                     return jsonify({"message": log_warning_return_str("Deepl translate failed.")}), 404
-        
+
         elif "gpt" in translateVendor:
             if api_key == "":
                 return jsonify({"message": log_warning_return_str("Missing translate key.")}), 404
             else:
-                ret = srtFileGPTTran(logger=app.logger, model=translateVendor, proxies=None, sourceFileNameAndPath=en_srt_merged_path, outputFileNameAndPath=zh_srt_merged_path, key=api_key)
+                ret = srtFileGPTTran(logger=app.logger, model=translateVendor, proxies=None,
+                                     sourceFileNameAndPath=en_srt_merged_path, outputFileNameAndPath=zh_srt_merged_path,
+                                     key=api_key)
                 if ret == True:
                     return jsonify({"message": log_info_return_str(
                         f"using {translateVendor} translate to translate SRT from {en_srt_merged_fn} to {zh_srt_merged_fn} successfully."),
@@ -318,7 +369,7 @@ def transhlate_to_zh(video_id):
         return jsonify({"message": log_error_return_str(
             f'An error occurred while translating SRT from {en_srt_merged_fn} to {zh_srt_merged_fn}: {exception}')}), 500
 
-    return  jsonify({"message": log_error_return_str("Translate failed.")}), 500
+    return jsonify({"message": log_error_return_str("Translate failed.")}), 500
 
 
 @app.route('/srt_zh_merged/<video_id>', methods=['GET'])
@@ -338,7 +389,7 @@ def srt_zh_merged_serve(video_id):
 def voice_connect(video_id):
     data = request.get_json()
     video_id = data['video_id']
-    voiceDir = os.path.join(output_path, video_id+"_zh_source")
+    voiceDir = os.path.join(output_path, video_id + "_zh_source")
     voice_connect_fn = video_id + "_zh.wav"
     voice_connect_path = os.path.join(output_path, voice_connect_fn)
 
@@ -354,6 +405,7 @@ def voice_connect(video_id):
     else:
         return jsonify({"message": log_warning_return_str("Voice connect failed.")}), 404
 
+
 @app.route('/voice_connect/<video_id>', methods=['GET'])
 def voice_connect_serve(video_id):
     voice_connect_fn = video_id + "_zh.wav"
@@ -365,36 +417,39 @@ def voice_connect_serve(video_id):
     return jsonify({"message": log_warning_return_str(
         f'Voice connect {voice_connect_fn} not found at {voice_connect_path}')}), 404
 
+
 @app.route('/tts', methods=['POST'])
 @require_video_id_from_post_request
 def tts(video_id):
     data = request.get_json()
     video_id = data['video_id']
     return jsonify({"message": log_info_return_str(
-            f"tts success."),
-            "video_id": video_id}), 200
+        f"tts success."),
+        "video_id": video_id}), 200
+
 
 @app.route('/tts/<video_id>', methods=['GET'])
 def tts_serve(video_id):
-    tts_dir = os.path.join(output_path, video_id+"_zh_source")
+    tts_dir = os.path.join(output_path, video_id + "_zh_source")
     tts_zip_fn = video_id + "_zh_source.zip"
     tts_zip_path = os.path.join(output_path, tts_zip_fn)
     print("tts_dir", tts_dir)
-    if os.path.exists(tts_dir)==False:
+    if os.path.exists(tts_dir) == False:
         return jsonify({"message": log_warning_return_str(
             f'Voice directory {tts_dir} not found at {output_path}')}), 404
-    
+
     zipf = zipfile.ZipFile(tts_zip_path, 'w', zipfile.ZIP_DEFLATED)
     for root, dirs, files in os.walk(tts_dir):
         for file in files:
             file_path = os.path.join(root, file)
             relative_path = os.path.relpath(file_path, output_path)
-            print(file_path+","+relative_path)
+            print(file_path + "," + relative_path)
             zipf.write(file_path, relative_path)
 
     zipf.close()
     print("tts_zip_path", tts_zip_path)
     return send_from_directory(output_path, tts_zip_fn, as_attachment=True)
+
 
 @app.route('/video_preview', methods=['POST'])
 @require_video_id_from_post_request
@@ -421,16 +476,17 @@ def video_preview(video_id):
     if os.path.exists(video_save_path) == False and os.path.exists(video_fhd_save_path) == False:
         return jsonify({"message": log_warning_return_str(
             f"No video found")}), 404
-    
+
     # 选择最佳分辨率的视频
     video_source_path = ""
     if os.path.exists(video_fhd_save_path):
-        video_source_path=video_fhd_save_path
+        video_source_path = video_fhd_save_path
     else:
-        video_source_path=video_save_path
+        video_source_path = video_save_path
 
     # 生成视频预览
-    ret = zhVideoPreview(app.logger, video_source_path, voice_connect_path, audio_bg_path, "暂时没有处理字幕文件，所以随便写", video_out_path)
+    ret = zhVideoPreview(app.logger, video_source_path, voice_connect_path, audio_bg_path,
+                         "暂时没有处理字幕文件，所以随便写", video_out_path)
     if ret == True:
         return jsonify({"message": log_info_return_str(
             f"Video preview {video_fhd} successfully."),
