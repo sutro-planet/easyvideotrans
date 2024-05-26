@@ -487,21 +487,27 @@ def srtToVoiceEdge(logger, srtFileNameAndPath, outputDir, character = "zh-CN-Xia
         index += 1
 
     # wait for all coroutines to finish
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(asyncio.gather(*coroutines))
+    asyncio.set_event_loop(asyncio.SelectorEventLoop())
+    asyncio.get_event_loop().run_until_complete(asyncio.gather(*coroutines))
+    # asyncio.get_event_loop().run_until_complete(convertSrtToVoiceEdgeAll(subTitleList, outputDir))
     
-    print("\nConvert srt to mp3 voice successfully")
-
+    print("\nConvert srt to mp3 voice successfully!!!")
     # convert mp3 to wav
     for i in range(len(fileMp3Names)):
+        print(f"Start to convert {fileMp3Names[i]} to {fileNames[i]}")
         mp3FileName = fileMp3Names[i]
         wavFileName = fileNames[i]
         mp3FileAndPath = os.path.join(outputDir, mp3FileName)
         wavFileAndPath = os.path.join(outputDir, wavFileName)
+        print(f"mp3FileAndPath = {mp3FileAndPath}, wavFileAndPath = {wavFileAndPath}")
+        # os.system(f"ffmpeg -i {mp3FileAndPath} -acodec pcm_s16le -ac 1 -ar 16000 {wavFileAndPath}")
         sound = AudioSegment.from_mp3(mp3FileAndPath)
+        print("before export")
         sound.export(wavFileAndPath, format="wav")
+        print(f"Convert {mp3FileName} to {wavFileName} successfully")
         os.remove(mp3FileAndPath)
-
+        print(f"Remove {mp3FileName} successfully")
+    print("to wav successfully")
     voiceMapSrt = copy.deepcopy(subTitleList)
     for i in range(len(voiceMapSrt)):
         voiceMapSrt[i].content = fileNames[i]
