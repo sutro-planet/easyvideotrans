@@ -5,7 +5,7 @@ from moviepy.editor import VideoFileClip
 from functools import wraps
 from flask import Flask, request, jsonify, render_template, send_from_directory
 import zipfile
-import uuid
+import shutil
 
 from tools.audio_remove import audio_remove
 from work_space import transcribeAudioEn, srtSentanceMerge, srtFileGoogleTran, srtFileDeeplTran, srtFileGPTTran, \
@@ -423,10 +423,31 @@ def voice_connect_serve(video_id):
 def tts(video_id):
     data = request.get_json()
     video_id = data['video_id']
-    return jsonify({"message": log_info_return_str(
-        f"tts success."),
-        "video_id": video_id}), 200
+    srt_fn = f'{video_id}_zh_merged.srt'
+    srt_path = os.path.join(output_path, srt_fn)
+    tts_dir = os.path.join(output_path, video_id+"_zh_source")
+    charater = data['tts_character']
 
+    if os.path.exists(srt_path) == False:
+        return jsonify({"message": log_warning_return_str(
+            f'Chinese SRT {srt_fn} not found at {output_path}')}), 404
+
+    if os.path.exists(tts_dir) == True:
+        # delete old tts dir
+        shutil.rmtree(tts_dir)
+    
+    try:
+        ret = srtToVoiceEdge(app.logger, srt_path, tts_dir, charater)
+        if ret == True:
+            return jsonify({"message": log_info_return_str(
+                    f"tts success."),
+                    "video_id": video_id}), 200
+        else:
+            return jsonify({"message": log_warning_return_str("tts failed.")}), 404
+    except Exception as e:
+        print(e)
+   
+    return jsonify({"message": log_warning_return_str("tts failed.")}), 404
 
 @app.route('/tts/<video_id>', methods=['GET'])
 def tts_serve(video_id):

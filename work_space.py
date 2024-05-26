@@ -487,11 +487,11 @@ def srtToVoiceEdge(logger, srtFileNameAndPath, outputDir, character = "zh-CN-Xia
         index += 1
 
     # wait for all coroutines to finish
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(asyncio.gather(*coroutines))
+    asyncio.set_event_loop(asyncio.SelectorEventLoop())
+    asyncio.get_event_loop().run_until_complete(asyncio.gather(*coroutines))
+    # asyncio.get_event_loop().run_until_complete(convertSrtToVoiceEdgeAll(subTitleList, outputDir))
     
-    print("\nConvert srt to mp3 voice successfully")
-
+    print("\nConvert srt to mp3 voice successfully!!!")
     # convert mp3 to wav
     for i in range(len(fileMp3Names)):
         mp3FileName = fileMp3Names[i]
@@ -501,7 +501,8 @@ def srtToVoiceEdge(logger, srtFileNameAndPath, outputDir, character = "zh-CN-Xia
         sound = AudioSegment.from_mp3(mp3FileAndPath)
         sound.export(wavFileAndPath, format="wav")
         os.remove(mp3FileAndPath)
-
+        
+    print("to wav successfully")
     voiceMapSrt = copy.deepcopy(subTitleList)
     for i in range(len(voiceMapSrt)):
         voiceMapSrt[i].content = fileNames[i]
