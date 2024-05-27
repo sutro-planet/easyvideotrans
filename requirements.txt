@@ -60,9 +60,6 @@ llvmlite==0.42.0
 MarkupSafe==2.1.5
 matplotlib-inline==0.1.6
 mistune==3.0.2
-mkl-fft==1.3.8
-mkl-random==1.2.4
-mkl-service==2.4.0
 more-itertools==10.2.0
 moviepy==1.0.3
 mpmath==1.3.0

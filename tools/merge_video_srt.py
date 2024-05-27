@@ -1,13 +1,13 @@
 import subprocess
 
-def add_subtitles_and_mix_audio(input_video, 
-                                input_subtitle, 
-                                input_audio1, 
-                                input_audio2, 
+
+def add_subtitles_and_mix_audio(input_video,
+                                input_subtitle,
+                                input_audio1,
+                                input_audio2,
                                 output_video):
     """
     使用 FFmpeg 将字幕和两个音频文件合成到视频文件中。
-    
     参数:
       input_video (str): 输入视频文件的路径。
       input_subtitle (str): 字幕文件（ASS格式）的路径。
@@ -45,10 +45,10 @@ def add_subtitles_and_mix_audio(input_video,
 
 def main():
     # 使用示例
-    add_subtitles_and_mix_audio(input_video='eMlx5fFNoYc_fhd.mp4', 
-                                input_subtitle='merged_subtitles.ass', 
-                                input_audio1='eMlx5fFNoYc_insturment.wav', 
-                                input_audio2='eMlx5fFNoYc_zh.wav', 
+    add_subtitles_and_mix_audio(input_video='eMlx5fFNoYc_fhd.mp4',
+                                input_subtitle='merged_subtitles.ass',
+                                input_audio1='eMlx5fFNoYc_insturment.wav',
+                                input_audio2='eMlx5fFNoYc_zh.wav',
                                 output_video='eMlx5fFNoYc_fhd_merge.mp4')
 
 

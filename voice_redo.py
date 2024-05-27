@@ -4,6 +4,7 @@ import srt
 import json
 import IPython
 
+
 def stringToVoice(url, string, outputFile):
     data = {
         "refer_wav_path": "ref/1.wav",
@@ -15,18 +16,20 @@ def stringToVoice(url, string, outputFile):
     if response.status_code == 400:
         IPython.embed()
         return False
-    
+
     with open(outputFile, "wb") as f:
         f.write(response.content)
+
 
 def load_param(path):
     with open(path, "r", encoding="utf-8") as file:
         paramDict = json.load(file)
     return paramDict
 
+
 if __name__ == "__main__":
     paramDirPathAndName = input("Please input the path and name of the parameter file: ")
-    
+
     if not os.path.exists(paramDirPathAndName):
         print("Please edit the file and run the script again.")
         exit(0)
@@ -63,5 +66,5 @@ if __name__ == "__main__":
         if os.path.exists(voiceFileAndPath):
             print("Delete the file: ", voiceFileAndPath)
             os.remove(voiceFileAndPath)
-        
+
         stringToVoice(url, subTitleList[index].content, voiceFileAndPath)

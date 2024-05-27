@@ -1,6 +1,3 @@
-import io
-import copy
-
 class WarningFile:
     def __init__(self, file_path, append=False):
         self.file_path = file_path
@@ -16,8 +13,8 @@ class WarningFile:
         if printMessage:
             print(message)
         self.file.flush()
-        
-    def close(self):    
+
+    def close(self):
         self.file.close()
 
     def __del__(self):
