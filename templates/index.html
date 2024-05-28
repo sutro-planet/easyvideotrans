@@ -2,10 +2,11 @@
 <html>
 <head>
     <title>Pytvzhen Downloader</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+    <script src="{{ url_for('static', filename='jquery-3.5.1.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='popper.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
 </head>
 <body>
 
@@ -185,7 +186,8 @@
                         <a id="downloadvoiceConnectButton" class="btn btn-primary" role="button" style="display: none;">Download
                             Connected
                             Voice</a>
-                        <a id="downloadvoiceConnectLogButton" class="btn btn-primary" role="button" style="display: none;">Download
+                        <a id="downloadvoiceConnectLogButton" class="btn btn-primary" role="button"
+                           style="display: none;">Download
                             Connected
                             Voice log</a>
                     </form>
