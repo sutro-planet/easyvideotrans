@@ -102,15 +102,14 @@ class Separator(object):
         return y_spec, v_spec
 
 
-def audio_remove(audioFileNameAndPath, voiceFileNameAndPath, instrumentFileNameAndPath, modelNameAndPath):
-    if AUDIO_REMOVE_DEVICE == "cpu":
-        device = torch.device('cpu')
-    elif AUDIO_REMOVE_DEVICE == "gpu":
-        device = device = torch.device('cuda:0')
-    else:
-        raise ValueError("Invalid device: {}".format(AUDIO_REMOVE_DEVICE))
+def audio_remove(audioFileNameAndPath, voiceFileNameAndPath, instrumentFileNameAndPath, modelNameAndPath,
+                 pytorchDevice):
+    if pytorchDevice not in ["cpu", "cuda:0"]:
+        raise ValueError("Invalid device: {}, valid choices are cpu or cuda:0. ".format(AUDIO_REMOVE_DEVICE))
 
-    print("Loading model " + AUDIO_REMOVE_DEVICE)
+    device = torch.device(pytorchDevice)
+
+    print("Loading model " + pytorchDevice)
     model = nets.CascadedNet(AUDIO_REMOVE_FFT_SIZE, AUDIO_REMOVE_HOP_SIZE, 32, 128)  # 模型参数
     model.load_state_dict(torch.load(modelNameAndPath, map_location='cpu'))
     model.to(device)
