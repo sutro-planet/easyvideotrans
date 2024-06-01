@@ -398,6 +398,7 @@ def transhlate_to_zh(video_id):
 @app.route('/translated_zh_upload', methods=['POST'])
 def translated_zh_upload():
     video_id = request.form['video_id']
+    output_path = app.config['OUTPUT_PATH']
     # check if the post request has the file part
     if 'file' not in request.files:
         return jsonify(error='No file part in the POST request'), 400
