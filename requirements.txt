@@ -18,7 +18,7 @@ charset-normalizer==3.3.2
 click==8.1.7
 colorama==0.4.6
 coloredlogs==15.0.1
-ctranslate2==4.3.0
+ctranslate2==4.2.1
 decorator==4.4.2
 deepl==1.17.0
 defusedxml==0.7.1
@@ -60,11 +60,7 @@ librosa==0.10.1
 llvmlite==0.42.0
 MarkupSafe==2.1.5
 matplotlib-inline==0.1.6
-mccabe==0.7.0
 mistune==3.0.2
-mkl-fft==1.3.8
-mkl-random==1.2.4
-mkl-service==2.4.0
 more-itertools==10.2.0
 moviepy==1.0.3
 mpmath==1.3.0
@@ -143,7 +139,7 @@ torchvision==0.17.2
 tornado==6.4
 tqdm==4.66.2
 traitlets==5.14.2
-triton==2.3.0
+triton==2.2.0
 typing_extensions==4.10.0
 urllib3==1.26.5
 wcwidth==0.2.13
