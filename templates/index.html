@@ -126,11 +126,12 @@
     </div>
 
 
-    <h1 class="text-center my-4">翻译原始字幕</h1>
+    <h1 class="text-center my-4">生成配音字幕</h1>
     <div class="row">
-        <div class="col-md-12">
+        <div class="col-md-6">
             <div class="card">
                 <div class="card-body">
+                    <h5 class="card-title">翻译英文以生成配音字幕</h5>
                     <form action="/translate_to_zh/" method="post" id="translateToZh">
                         <label for="video_id">Enter YouTube Video ID to transcribe:</label><br>
                         <input type="text" id="video_id" name="video_id"><br>
@@ -143,6 +144,23 @@
                         <input type="submit" value="Translate to Chinese">
                         <a id="downloadSrtZhMergeButton" class="btn btn-primary" role="button" style="display: none;">Download
                             zh SRT</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+                
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">上传修改后的配音字幕</h5>
+                    <form action="/translated_zh_upload" method="post" enctype="multipart/form-data" id="uploadZhMerge">
+                        <label for="video_id">Enter Video ID to transcribe:</label><br>
+                        <input type="text" id="video_id" name="video_id"><br>
+                        <div class="form-group">
+                            <input type="file" class="form-control-file" name="file" accept=".srt">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Upload</button>
                     </form>
                 </div>
             </div>
@@ -255,6 +273,31 @@
                     }, false);
                     return xhr;
                 },
+                success: function (response) {
+                    $("#serverResponse").text(response.message);
+                    $("#responseModal").modal('show');
+                },
+                error: function (response) {
+                    $("#serverResponse").text(response.responseJSON.message);
+                    $("#responseModal").modal('show');
+                }
+            });
+        });
+
+        $("#uploadZhMerge").submit(function (e) {
+            e.preventDefault();
+
+            var formData = new FormData(this);
+            var videoID = $("#video_id").val(); // 假设视频 ID 存储在 id 为 videoID 的输入框中
+
+            formData.append('video_id', videoID);
+
+            $.ajax({
+                url: '/translated_zh_upload',
+                type: 'post',
+                data: formData,
+                contentType: false,
+                processData: false,
                 success: function (response) {
                     $("#serverResponse").text(response.message);
                     $("#responseModal").modal('show');

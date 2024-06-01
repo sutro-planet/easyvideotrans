@@ -67,8 +67,7 @@ def video_extension_allowed(filename):
     return '.' in filename and \
         filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-
-def video_extension(filename):
+def get_extension(filename):
     return filename.rsplit('.', 1)[1].lower()
 
 
@@ -91,7 +90,7 @@ def video_upload():
 
     if file and video_extension_allowed(file.filename):
         filename = secure_filename(file.filename)
-        file_ext = video_extension(filename)
+        file_ext = get_extension(filename)
         video_id, video_fn = unique_video_fn_with_extension(file_ext)
 
         file.save(os.path.join(output_path, video_fn))
@@ -371,6 +370,24 @@ def transhlate_to_zh(video_id):
             f'An error occurred while translating SRT from {en_srt_merged_fn} to {zh_srt_merged_fn}: {exception}')}), 500
 
     return jsonify({"message": log_error_return_str("Translate failed.")}), 500
+
+@app.route('/translated_zh_upload', methods=['POST'])
+def translated_zh_upload():
+    video_id = request.form['video_id']
+    # check if the post request has the file part
+    if 'file' not in request.files:
+        return jsonify(error='No file part in the POST request'), 400
+
+    file = request.files['file']
+    # if user does not select file, browser also
+    # submit an empty part without filename
+    if file and get_extension(file.filename):
+        filename = video_id+"_zh_merge.srt"
+        print("save:"+filename)
+        file.save(os.path.join(output_path, filename))
+        return jsonify({"message": log_info_return_str(f"SRT {filename} uploaded")})
+    else:
+        return jsonify({"message", log_error_return_str(f"Video upload failed: {file.filename} extension not allowed")})
 
 
 @app.route('/srt_zh_merged/<video_id>', methods=['GET'])
