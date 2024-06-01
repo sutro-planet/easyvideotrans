@@ -5,6 +5,7 @@ from pytube import YouTube
 from moviepy.editor import VideoFileClip
 from functools import wraps
 from flask import Flask, request, jsonify, render_template, send_from_directory
+from prometheus_flask_exporter import PrometheusMetrics
 import zipfile
 import shutil
 import uuid
@@ -17,7 +18,7 @@ from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.config.from_file("./pytvzhen-config.json", load=json.load)
-
+metrics = PrometheusMetrics(app)
 
 def log_info_return_str(message):
     app.logger.info(message)
