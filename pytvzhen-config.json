@@ -1,0 +1,5 @@
+{
+  "OUTPUT_PATH": "./output",
+  "REMOVE_BACKGROUND_MUSIC_TORCH_DEVICE": "cuda:0",
+  "REMOVE_BACKGROUND_MUSIC_BASELINE_MODEL_PATH": "./models/baseline.pth"
+}

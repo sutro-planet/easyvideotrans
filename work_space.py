@@ -606,7 +606,8 @@ def voiceConnect(logger, sourceDir, outputAndPath, warningFilePath):
             audioEndPosition = audioPosition + audio.duration_seconds * 1000 + MIN_GAP_DURATION * 1000
             audioNextPosition = voiceMapSrt[i + 1].start.total_seconds() * 1000
             if audioNextPosition < audioEndPosition:
-                speedUp = (audio.duration_seconds * 1000 + MIN_GAP_DURATION * 1000) / (audioNextPosition - audioPosition)
+                speedUp = (audio.duration_seconds * 1000 + MIN_GAP_DURATION * 1000) / (
+                    audioNextPosition - audioPosition)
                 seconds = audioPosition / 1000.0
                 timeStr = str(datetime.timedelta(seconds=seconds))
                 if speedUp > MAX_SPEED_UP:
@@ -765,7 +766,8 @@ if __name__ == "__main__":
     if paramDict["audio remove"]:
         print(f"Removing music from {audioFileNameAndPath} to {voiceNameAndPath} and {insturmentNameAndPath}")
         try:
-            audio_remove(audioFileNameAndPath, voiceNameAndPath, insturmentNameAndPath, audioRemoveModelNameAndPath)
+            audio_remove(audioFileNameAndPath, voiceNameAndPath, insturmentNameAndPath, audioRemoveModelNameAndPath,
+                         "cuda:0")
             executeLog.write(
                 f"[WORK o] Remove music from {audioFileNameAndPath} to {voiceNameAndPath} and {insturmentNameAndPath} successfully.")
         except Exception as e:

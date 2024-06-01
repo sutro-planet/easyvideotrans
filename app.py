@@ -1,4 +1,5 @@
 import os
+import json
 
 from pytube import YouTube
 from moviepy.editor import VideoFileClip
@@ -15,12 +16,7 @@ from work_space import transcribeAudioEn, srtSentanceMerge, srtFileGoogleTran, s
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-
-app_path = os.path.abspath(__file__)
-dir_path = os.path.dirname(app_path)
-output_path = os.path.join(dir_path, "output")
-model_path = os.path.join(dir_path, "models")
-baseline_path = os.path.join(model_path, "baseline.pth")
+app.config.from_file("./pytvzhen-config.json", load=json.load)
 
 
 def log_info_return_str(message):
@@ -55,6 +51,9 @@ def require_video_id_from_post_request(func):
     return decorated_func
 
 
+log_info_return_str(f"Launching Pytvzhen config: \n\t{app.config}")
+
+
 @app.route('/', methods=['GET'])
 def index():
     return render_template('index.html')
@@ -78,6 +77,8 @@ def unique_video_fn_with_extension(extension):
 
 @app.route('/video_upload', methods=['POST'])
 def video_upload():
+    output_path = app.config['OUTPUT_PATH']
+
     # check if the post request has the file part
     if 'file' not in request.files:
         return jsonify(error='No file part in the POST request'), 400
@@ -103,6 +104,8 @@ def video_upload():
 @app.route('/yt_download', methods=['POST'])
 @require_video_id_from_post_request
 def yt_download(video_id):
+    output_path = app.config['OUTPUT_PATH']
+
     video_fn = f"{video_id}.mp4"
     video_fhd = f"{video_id}_fhd.mp4"
     video_save_path = os.path.join(output_path, video_fn)
@@ -137,6 +140,7 @@ def yt_download(video_id):
 
 @app.route('/yt/<video_id>', methods=['GET'])
 def yt_serve(video_id):
+    output_path = app.config['OUTPUT_PATH']
     video_fn = f'{video_id}.mp4'
 
     if os.path.exists(os.path.join(output_path, video_fn)):
@@ -148,6 +152,8 @@ def yt_serve(video_id):
 @app.route('/extra_audio', methods=['POST'])
 @require_video_id_from_post_request
 def extra_audio(video_id):
+    output_path = app.config['OUTPUT_PATH']
+
     video_fn = f'{video_id}.mp4'
     audio_fn = f'{video_id}.wav'
 
@@ -176,6 +182,8 @@ def extra_audio(video_id):
 
 @app.route('/audio/<video_id>', methods=['GET'])
 def audio_serve(video_id):
+    output_path = app.config['OUTPUT_PATH']
+
     video_fn = f'{video_id}.mp4'
     audio_fn = f'{video_id}.wav'
 
@@ -190,6 +198,8 @@ def audio_serve(video_id):
 @app.route('/remove_audio_bg', methods=['POST'])
 @require_video_id_from_post_request
 def remove_audio_bg(video_id):
+    output_path = app.config['OUTPUT_PATH']
+
     video_fn = f'{video_id}.mp4'
     audio_fn = f'{video_id}.wav'
     audio_no_bg_fn, audio_bg_fn = f'{video_id}_no_bg.wav', f'{video_id}_bg.wav'
@@ -210,7 +220,9 @@ def remove_audio_bg(video_id):
             f'not found at {output_path}, please extract it first')}), 404
 
     try:
-        audio_remove(audio_path, audio_no_bg_path, audio_bg_fn_path, baseline_path)
+        baseline_path = app.config['REMOVE_BACKGROUND_MUSIC_BASELINE_MODEL_PATH']
+        audio_remove(audio_path, audio_no_bg_path, audio_bg_fn_path, baseline_path,
+                     app.config['REMOVE_BACKGROUND_MUSIC_TORCH_DEVICE'])
         return jsonify({"message": log_info_return_str(
             f"Remove remove background music for {audio_fn} as {audio_no_bg_fn} and {audio_bg_fn_path} successfully."),
             "video_id": video_id}), 200
@@ -224,6 +236,8 @@ def remove_audio_bg(video_id):
 
 @app.route('/audio_no_bg/<video_id>', methods=['GET'])
 def audio_no_bg_serve(video_id):
+    output_path = app.config['OUTPUT_PATH']
+
     audio_no_bg_fn = f'{video_id}_no_bg.wav'
     audio_no_bg_path = os.path.join(output_path, audio_no_bg_fn)
 
@@ -236,6 +250,8 @@ def audio_no_bg_serve(video_id):
 
 @app.route('/audio_bg/<video_id>', methods=['GET'])
 def audio_bg_serve(video_id):
+    output_path = app.config['OUTPUT_PATH']
+
     audio_bg_fn = f'{video_id}_bg.wav'
     audio_bg_path = os.path.join(output_path, audio_bg_fn)
 
@@ -249,6 +265,8 @@ def audio_bg_serve(video_id):
 @app.route('/transcribe', methods=['POST'])
 @require_video_id_from_post_request
 def transcribe(video_id):
+    output_path = app.config['OUTPUT_PATH']
+
     transcribe_model = "medium"
     en_srt_fn, en_srt_merged_fn, audio_no_bg_fn = f'{video_id}_en.srt', f'{video_id}_en_merged.srt', f'{video_id}_no_bg.wav'
 
@@ -284,6 +302,8 @@ def transcribe(video_id):
 
 @app.route('/srt_en/<video_id>', methods=['GET'])
 def srt_en_serve(video_id):
+    output_path = app.config['OUTPUT_PATH']
+
     en_srt_fn = f'{video_id}_en.srt'
     en_srt_path = os.path.join(output_path, en_srt_fn)
 
@@ -296,6 +316,8 @@ def srt_en_serve(video_id):
 
 @app.route('/srt_en_merged/<video_id>', methods=['GET'])
 def srt_en_merged_serve(video_id):
+    output_path = app.config['OUTPUT_PATH']
+
     en_srt_merged_fn = f'{video_id}_en_merged.srt'
     en_srt_merged_path = os.path.join(output_path, en_srt_merged_fn)
 
@@ -309,6 +331,8 @@ def srt_en_merged_serve(video_id):
 @app.route('/translate_to_zh', methods=['POST'])
 @require_video_id_from_post_request
 def transhlate_to_zh(video_id):
+    output_path = app.config['OUTPUT_PATH']
+
     data = request.get_json()
     video_id = data['video_id']
     translateVendor = data['translate_vendor']
@@ -392,6 +416,8 @@ def translated_zh_upload():
 
 @app.route('/srt_zh_merged/<video_id>', methods=['GET'])
 def srt_zh_merged_serve(video_id):
+    output_path = app.config['OUTPUT_PATH']
+
     zh_srt_merged_fn = f'{video_id}_zh_merged.srt'
     zh_srt_merged_path = os.path.join(output_path, zh_srt_merged_fn)
 
@@ -405,6 +431,8 @@ def srt_zh_merged_serve(video_id):
 @app.route('/voice_connect', methods=['POST'])
 @require_video_id_from_post_request
 def voice_connect(video_id):
+    output_path = app.config['OUTPUT_PATH']
+
     data = request.get_json()
     video_id = data['video_id']
     voiceDir = os.path.join(output_path, video_id + "_zh_source")
@@ -428,6 +456,8 @@ def voice_connect(video_id):
 
 @app.route('/voice_connect_log/<video_id>', methods=['GET'])
 def voice_connect_log_serve(video_id):
+    output_path = app.config['OUTPUT_PATH']
+
     warning_log_fn = video_id + "_connect_warning.log"
     warning_log_path = os.path.join(output_path, warning_log_fn)
 
@@ -440,6 +470,8 @@ def voice_connect_log_serve(video_id):
 
 @app.route('/voice_connect/<video_id>', methods=['GET'])
 def voice_connect_serve(video_id):
+    output_path = app.config['OUTPUT_PATH']
+
     voice_connect_fn = video_id + "_zh.wav"
     voice_connect_path = os.path.join(output_path, voice_connect_fn)
 
@@ -453,6 +485,8 @@ def voice_connect_serve(video_id):
 @app.route('/tts', methods=['POST'])
 @require_video_id_from_post_request
 def tts(video_id):
+    output_path = app.config['OUTPUT_PATH']
+
     data = request.get_json()
     video_id = data['video_id']
     srt_fn = f'{video_id}_zh_merged.srt'
@@ -484,6 +518,8 @@ def tts(video_id):
 
 @app.route('/tts/<video_id>', methods=['GET'])
 def tts_serve(video_id):
+    output_path = app.config['OUTPUT_PATH']
+
     tts_dir = os.path.join(output_path, video_id + "_zh_source")
     tts_zip_fn = video_id + "_zh_source.zip"
     tts_zip_path = os.path.join(output_path, tts_zip_fn)
@@ -508,6 +544,8 @@ def tts_serve(video_id):
 @app.route('/video_preview', methods=['POST'])
 @require_video_id_from_post_request
 def video_preview(video_id):
+    output_path = app.config['OUTPUT_PATH']
+
     data = request.get_json()
     video_id = data['video_id']
     voice_connect_fn = video_id + "_zh.wav"
@@ -550,6 +588,8 @@ def video_preview(video_id):
 
 @app.route('/video_preview/<video_id>', methods=['GET'])
 def video_preview_serve(video_id):
+    output_path = app.config['OUTPUT_PATH']
+
     video_preview_fn = f"{video_id}_preview.mp4"
     video_preview_path = os.path.join(output_path, video_preview_fn)
 
