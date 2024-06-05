@@ -492,7 +492,6 @@ def srtToVoiceEdge(logger, srtFileNameAndPath, outputDir, character="zh-CN-Xiaoy
     fileMp3Names = []
 
     async def convertSrtToVoiceEdge(text, path):
-        print(f"Start to convert srt to voice into {path}, text: {text}")
         communicate = edge_tts.Communicate(text, character)
         await communicate.save(path)
 
