@@ -19,6 +19,20 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 app.config.from_file("./pytvzhen-config.json", load=json.load)
 metrics = PrometheusMetrics(app)
+metrics.info('pytvzhen_web', 'Pytvzhen backend API', version='1.0.0')
+
+PYTVZHEN_STAGE = 'PYTVZHEN_STAGE'
+
+pytvzhen_api_request_counter = metrics.counter(
+    'pytvzhen_api_request_counter', 'Request count by request paths',
+    labels={'base_url': lambda: url_rule_to_base(request.url_rule), 'stage': lambda: pytvzhen_stage(),
+            'method': lambda: request.method, 'status': lambda r: r.status_code}
+)
+
+
+def pytvzhen_stage():
+    return os.environ[PYTVZHEN_STAGE] if PYTVZHEN_STAGE in os.environ else 'default'
+
 
 def log_info_return_str(message):
     app.logger.info(message)
@@ -33,6 +47,11 @@ def log_error_return_str(message):
 def log_warning_return_str(message):
     app.logger.warning(message)
     return message
+
+
+def url_rule_to_base(url_rule):
+    base_path = str(url_rule)
+    return base_path.split('<')[0].rstrip('/')
 
 
 def require_video_id_from_post_request(func):
@@ -56,6 +75,7 @@ log_info_return_str(f"Launching Pytvzhen config: \n\t{app.config}")
 
 
 @app.route('/', methods=['GET'])
+@metrics.do_not_track()
 def index():
     return render_template('index.html')
 
@@ -67,6 +87,7 @@ def video_extension_allowed(filename):
     return '.' in filename and \
         filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
 def get_extension(filename):
     return filename.rsplit('.', 1)[1].lower()
 
@@ -77,6 +98,7 @@ def unique_video_fn_with_extension(extension):
 
 
 @app.route('/video_upload', methods=['POST'])
+@pytvzhen_api_request_counter
 def video_upload():
     output_path = app.config['OUTPUT_PATH']
 
@@ -103,6 +125,7 @@ def video_upload():
 
 
 @app.route('/yt_download', methods=['POST'])
+@pytvzhen_api_request_counter
 @require_video_id_from_post_request
 def yt_download(video_id):
     output_path = app.config['OUTPUT_PATH']
@@ -140,6 +163,7 @@ def yt_download(video_id):
 
 
 @app.route('/yt/<video_id>', methods=['GET'])
+@pytvzhen_api_request_counter
 def yt_serve(video_id):
     output_path = app.config['OUTPUT_PATH']
     video_fn = f'{video_id}.mp4'
@@ -151,6 +175,7 @@ def yt_serve(video_id):
 
 
 @app.route('/extra_audio', methods=['POST'])
+@pytvzhen_api_request_counter
 @require_video_id_from_post_request
 def extra_audio(video_id):
     output_path = app.config['OUTPUT_PATH']
@@ -182,6 +207,7 @@ def extra_audio(video_id):
 
 
 @app.route('/audio/<video_id>', methods=['GET'])
+@pytvzhen_api_request_counter
 def audio_serve(video_id):
     output_path = app.config['OUTPUT_PATH']
 
@@ -197,6 +223,7 @@ def audio_serve(video_id):
 
 
 @app.route('/remove_audio_bg', methods=['POST'])
+@pytvzhen_api_request_counter
 @require_video_id_from_post_request
 def remove_audio_bg(video_id):
     output_path = app.config['OUTPUT_PATH']
@@ -236,6 +263,7 @@ def remove_audio_bg(video_id):
 
 
 @app.route('/audio_no_bg/<video_id>', methods=['GET'])
+@pytvzhen_api_request_counter
 def audio_no_bg_serve(video_id):
     output_path = app.config['OUTPUT_PATH']
 
@@ -250,6 +278,7 @@ def audio_no_bg_serve(video_id):
 
 
 @app.route('/audio_bg/<video_id>', methods=['GET'])
+@pytvzhen_api_request_counter
 def audio_bg_serve(video_id):
     output_path = app.config['OUTPUT_PATH']
 
@@ -264,6 +293,7 @@ def audio_bg_serve(video_id):
 
 
 @app.route('/transcribe', methods=['POST'])
+@pytvzhen_api_request_counter
 @require_video_id_from_post_request
 def transcribe(video_id):
     output_path = app.config['OUTPUT_PATH']
@@ -315,21 +345,8 @@ def srt_en_serve(video_id):
         f'Transcribed English SRT {en_srt_fn} not found at {en_srt_path}')}), 404
 
 
-@app.route('/srt_en_merged/<video_id>', methods=['GET'])
-def srt_en_merged_serve(video_id):
-    output_path = app.config['OUTPUT_PATH']
-
-    en_srt_merged_fn = f'{video_id}_en_merged.srt'
-    en_srt_merged_path = os.path.join(output_path, en_srt_merged_fn)
-
-    if os.path.exists(en_srt_merged_path):
-        return send_from_directory(output_path, en_srt_merged_fn, as_attachment=True)
-
-    return jsonify({"message": log_warning_return_str(
-        f'Transcribed English SRT {en_srt_merged_fn} not found at {en_srt_merged_path}')}), 404
-
-
 @app.route('/translate_to_zh', methods=['POST'])
+@pytvzhen_api_request_counter
 @require_video_id_from_post_request
 def transhlate_to_zh(video_id):
     output_path = app.config['OUTPUT_PATH']
@@ -396,7 +413,24 @@ def transhlate_to_zh(video_id):
 
     return jsonify({"message": log_error_return_str("Translate failed.")}), 500
 
+
+@app.route('/srt_en_merged/<video_id>', methods=['GET'])
+@pytvzhen_api_request_counter
+def srt_en_merged_serve(video_id):
+    output_path = app.config['OUTPUT_PATH']
+
+    en_srt_merged_fn = f'{video_id}_en_merged.srt'
+    en_srt_merged_path = os.path.join(output_path, en_srt_merged_fn)
+
+    if os.path.exists(en_srt_merged_path):
+        return send_from_directory(output_path, en_srt_merged_fn, as_attachment=True)
+
+    return jsonify({"message": log_warning_return_str(
+        f'Transcribed English SRT {en_srt_merged_fn} not found at {en_srt_merged_path}')}), 404
+
+
 @app.route('/translated_zh_upload', methods=['POST'])
+@pytvzhen_api_request_counter
 def translated_zh_upload():
     video_id = request.form['video_id']
     output_path = app.config['OUTPUT_PATH']
@@ -408,8 +442,8 @@ def translated_zh_upload():
     # if user does not select file, browser also
     # submit an empty part without filename
     if file and get_extension(file.filename):
-        filename = video_id+"_zh_merge.srt"
-        print("save:"+filename)
+        filename = video_id + "_zh_merge.srt"
+        print("save:" + filename)
         file.save(os.path.join(output_path, filename))
         return jsonify({"message": log_info_return_str(f"SRT {filename} uploaded")})
     else:
@@ -417,6 +451,7 @@ def translated_zh_upload():
 
 
 @app.route('/srt_zh_merged/<video_id>', methods=['GET'])
+@pytvzhen_api_request_counter
 def srt_zh_merged_serve(video_id):
     output_path = app.config['OUTPUT_PATH']
 
@@ -431,6 +466,7 @@ def srt_zh_merged_serve(video_id):
 
 
 @app.route('/voice_connect', methods=['POST'])
+@pytvzhen_api_request_counter
 @require_video_id_from_post_request
 def voice_connect(video_id):
     output_path = app.config['OUTPUT_PATH']
@@ -457,6 +493,7 @@ def voice_connect(video_id):
 
 
 @app.route('/voice_connect_log/<video_id>', methods=['GET'])
+@pytvzhen_api_request_counter
 def voice_connect_log_serve(video_id):
     output_path = app.config['OUTPUT_PATH']
 
@@ -471,6 +508,7 @@ def voice_connect_log_serve(video_id):
 
 
 @app.route('/voice_connect/<video_id>', methods=['GET'])
+@pytvzhen_api_request_counter
 def voice_connect_serve(video_id):
     output_path = app.config['OUTPUT_PATH']
 
@@ -485,6 +523,7 @@ def voice_connect_serve(video_id):
 
 
 @app.route('/tts', methods=['POST'])
+@pytvzhen_api_request_counter
 @require_video_id_from_post_request
 def tts(video_id):
     output_path = app.config['OUTPUT_PATH']
@@ -519,6 +558,7 @@ def tts(video_id):
 
 
 @app.route('/tts/<video_id>', methods=['GET'])
+@pytvzhen_api_request_counter
 def tts_serve(video_id):
     output_path = app.config['OUTPUT_PATH']
 
@@ -544,6 +584,7 @@ def tts_serve(video_id):
 
 
 @app.route('/video_preview', methods=['POST'])
+@pytvzhen_api_request_counter
 @require_video_id_from_post_request
 def video_preview(video_id):
     output_path = app.config['OUTPUT_PATH']
@@ -589,6 +630,7 @@ def video_preview(video_id):
 
 
 @app.route('/video_preview/<video_id>', methods=['GET'])
+@pytvzhen_api_request_counter
 def video_preview_serve(video_id):
     output_path = app.config['OUTPUT_PATH']
 

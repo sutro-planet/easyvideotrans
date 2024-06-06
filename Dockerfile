@@ -21,5 +21,8 @@ ENV FLASK_RUN_PORT 8080
 ENV FLASK_APP app.py
 ENV FLASK_DEBUG 0
 
+ARG PYTVZHEN_STAGE=beta
+ENV PYTVZHEN_STAGE=${PYTVZHEN_STAGE}
+
 # Run app.py when the container launches
 CMD [ "/bin/bash", "-c", "python -m flask run --host=0.0.0.0" ]
