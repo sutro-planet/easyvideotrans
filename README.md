@@ -22,9 +22,10 @@
 </div>
 
 # 简介  
-
+本项目着眼于从原始视频到翻译后最终视频的整个工作流程，确保从一而终的整个过程顺畅高效。项目提供了web后端，方便<br>
+<br>
 本方案优势：
-- 本方案提供最简单易用的流程接口，功能严格精选，确保用户最简单有效的为视频翻译配音，避免被巨量的不靠普方案迷惑。<br>
+- 方案简单好用，经过验证，十分可靠，避免被巨量的不靠普方案迷惑，节约用户选择成本。<br>
 - 翻译结果质量高，大幅减少人工校对。前期项目<a href="https://github.com/CuSO4Gem/pytvzhen">pytvzhen</a>已经接受广大群友考验，倍受好评。<br>
 - 方案开源可靠，免费使用。代码结构清晰，可读性强，可扩展性强，适合二次开发。
 
@@ -110,8 +111,7 @@ flask run --host=0.0.0.0 --debug
  - [pytvzhen](https://github.com/CuSO4Gem/pytvzhen)
  - [pytube](https://github.com/pytube/pytube)
  - [ffmpeg](https://ffmpeg.org/)
- - [stable-ts](https://github.com/jianfch/stable-ts)
- - [whisper](https://github.com/openai/whisper)
+ - [faster-whisper](https://github.com/SYSTRAN/faster-whisper)
  - [vocal-remover](https://github.com/tsurumeso/vocal-remover/releases)
  - [srt](https://srt.readthedocs.io/en/latest/api.html)
  - [pygtrans](https://github.com/foyoux/pygtrans)
