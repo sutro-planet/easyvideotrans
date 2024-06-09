@@ -3,10 +3,10 @@
 
 ## 视频上传
 - 说明：上传视频文件，并返回视频ID。
-- 路径：/video_to_audio
+- 路径：/video_upload
 - 请求方法：POST
 - 返回：
-    - 成功：{"status": 200, "message": \[提示信息\], "video_id": \[视频ID\]}
+    - 成功：code:200 {"message": \[提示信息\], "video_id": \[视频ID\]}
     - 失败：code:500 { "message": \[错误信息\]}
 
 ## youtube视频获取
@@ -14,7 +14,7 @@
 - 路径：/yt_download
 - 请求方法：POST
 - 返回:
-    - 成功：{"status": 200, "message": \[提示信息\], "video_id": \[视频ID\]}
+    - 成功：code:200 {"message": \[提示信息\], "video_id": \[视频ID\]}
     - 失败：code:500 { "message": \[错误信息\]}
 
 ## 视频下载
