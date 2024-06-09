@@ -1,19 +1,19 @@
 
 <div align="center"><a name="readme-top"></a>
 
-<a href="https://x.com/Lafe8088" target="_blank">
+<a href="https://github.com/sutro-planet/pytvzhen-web" target="_blank">
   <img src="assets/cartography.png" alt="alt text">
 </a>
 
-<h1>Easy VideoTrans</h1>
+<h1>EasyVideoTrans</h1>
 <h3>
-易用AI频翻译配音工具的web后端<br /> 
+易用AI频翻译配音工具的web后端<br />
 </h3>
 
 <div style="text-align: center;">
 
 [Changelog](./doc/change_log.md) <br>
-![Linux Verfied](https://img.shields.io/badge/Linux-Verfied-brightgreen) 
+![Linux Verfied](https://img.shields.io/badge/Linux-Verfied-brightgreen)
 [![Bilibili](https://img.shields.io/badge/Bilibili-蓝色硫酸铜-FF69B4?style=flat&logo=bilibili)](https://space.bilibili.com/278134)
 [![x zornlink](https://img.shields.io/twitter/url/https/twitter.com/cloudposse.svg?style=social&label=Follow%20%40Zornlink)](https://x.com/zornlink)
 [![q群1](https://img.shields.io/badge/企鹅群-536918174-1EBAFC?style=flat&logo=tencentqq)](https://qm.qq.com/q/pJMgV3liiO)
@@ -21,7 +21,7 @@
 
 </div>
 
-# 简介  
+# 简介
 本项目着眼于从原始视频到翻译后最终视频的整个工作流程，确保从一而终的整个过程顺畅高效。项目提供了web后端，方便<br>
 <br>
 本方案优势：
@@ -30,7 +30,7 @@
 - 方案开源可靠，免费使用。代码结构清晰，可读性强，可扩展性强，适合二次开发。
 
 
-相关技术说明：  
+相关技术说明：
 在[技术关注&开发计划](#技术关注开发计划)部分，我们列出了本方案的主要技术关注点，以及后续的开发计划。本项目重点强调易用、可靠、以及产生最终最终视频的速度。因此我们排除了大量不稳定、不可靠的方案，进保留整个工作流程中最好用的方案献给广大用户。
 
 <img src="assets/logo.png" alt="图片">
@@ -60,16 +60,16 @@ docker run --rm -p 8080:8080 -v output:/app/output hanfa/pytvzhen-web:latest
 ### 环境准备
 安装依赖需要：requirements.txt中的各种依赖，pythorch库，ffmpeg(可选)。本工程Python 3.9.19上验证。另外如果你想体验完整的工作流程，推荐下载一个字幕文件编辑器，尽管本程序用不到，但是在转换视频的工作中，你一定用得到，我使用Aegisub。
 
-各种基本库安装  
+各种基本库安装
 ``
 pip install -r requirements.txt
 ``
 
-pytorch安装：  
+pytorch安装：
 在[点击这里](https://pytorch.org/get-started/locally/)，选择合适的安装版本，**必须要选择gpu版！！！！** 原因是作者偷懒没有做cpu方案，其实如果你愿意，改几行源码实现在CPU上跑应该也不难。
 
-其他依赖：  
-ffmpeg安装  
+其他依赖：
+ffmpeg安装
 ```
 sudo apt-get install ffmpeg
 ```
