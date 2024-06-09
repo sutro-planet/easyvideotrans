@@ -1,23 +1,75 @@
-# 简介
-本项目为视频翻译配音工具，旨在为用户提供最简单可靠的视频翻译配音方案。自带简易web前端，
-<br>
-本方案优势：  
-- 本方案提供最简单易用的流程接口，功能严格精选，确保用户最简单有效的为视频翻译配音，避免被巨量的不靠普方案迷惑。
-- 翻译结果质量高，大幅减少人工校对。前期项目[pytvzhen](https://github.com/CuSO4Gem/pytvzhen)已经接受广大群友考验，倍受好评。
+
+<div align="center"><a name="readme-top"></a>
+
+<a href="https://x.com/Lafe8088" target="_blank">
+  <img src="assets/cartography.png" alt="alt text">
+</a>
+
+<h1>Easy VideoTrans</h1>
+<h3>
+易用AI频翻译配音工具的web后端<br /> 
+</h3>
+
+<div style="text-align: center;">
+
+[Changelog](./doc/change_log.md) <br>
+![Linux Verfied](https://img.shields.io/badge/Linux-Verfied-brightgreen) 
+[![Bilibili](https://img.shields.io/badge/Bilibili-蓝色硫酸铜-FF69B4?style=flat&logo=bilibili)](https://space.bilibili.com/278134)
+[![x zornlink](https://img.shields.io/twitter/url/https/twitter.com/cloudposse.svg?style=social&label=Follow%20%40Zornlink)](https://x.com/zornlink)
+[![q群1](https://img.shields.io/badge/企鹅群-536918174-1EBAFC?style=flat&logo=tencentqq)](https://qm.qq.com/q/pJMgV3liiO)
+</div>
+
+</div>
+
+# 简介  
+
+<div style="display: flex;">
+    <div style="flex: 1;">
+
+<p> 
+<p> 本方案优势：</p>
+<p> 
+- 本方案提供最简单易用的流程接口，功能严格精选，确保用户最简单有效的为视频翻译配音，避免被巨量的不靠普方案迷惑。<br>
+- 翻译结果质量高，大幅减少人工校对。前期项目<a href="https://github.com/CuSO4Gem/pytvzhen">pytvzhen</a>已经接受广大群友考验，倍受好评。<br>
 - 方案开源可靠，免费使用。代码结构清晰，可读性强，可扩展性强，适合二次开发。
+</p>
+
+<p>
+<p> 相关技术说明： </p>
+<p>
+在"技术关注&开发计划"部分，我们列出了本方案的主要技术关注点，以及后续的开发计划。本项目重点强调易用、可靠、以及产生最终最终视频的速度。因此我们排除了大量不稳定、不可靠的方案，进保留整个工作流程中最好用的方案献给广大用户。
+</p>
+</p>
+
+</p>
+    </div>
+    <div>
+        <img src="assets/logo.png" alt="图片">
+    </div>
+</div>
 
 # 目录
-- [依赖](#依赖)
-- [流程说明](#流程说明)
-  - [流程列表](#流程列表)
-- [json全参数说明](#json全参数说明)
-- [工作流程](#工作流程)
+- [简介](#简介)
+- [目录](#目录)
+- [部署](#部署)
+  - [Docker部署（推荐）](#docker部署推荐)
+  - [本地部署](#本地部署)
+    - [环境准备](#环境准备)
+    - [运行](#运行)
+- [API说明](#api说明)
+- [技术关注\&开发计划](#技术关注开发计划)
+- [主要上游开源项目](#主要上游开源项目)
 
 # 部署
 
-## Docker部署
+## Docker部署（推荐）
+```shell
+docker run --rm -p 8080:8080 -v output:/app/output hanfa/pytvzhen-web:latest
+```
+
 
 ## 本地部署
+### 环境准备
 安装依赖需要：requirements.txt中的各种依赖，pythorch库，ffmpeg(可选)。本工程Python 3.9.19上验证。另外如果你想体验完整的工作流程，推荐下载一个字幕文件编辑器，尽管本程序用不到，但是在转换视频的工作中，你一定用得到，我使用Aegisub。
 
 各种基本库安装  
@@ -25,22 +77,50 @@
 pip install -r requirements.txt
 ``
 
-pytorch安装  
+pytorch安装：  
 在[点击这里](https://pytorch.org/get-started/locally/)，选择合适的安装版本，**必须要选择gpu版！！！！** 原因是作者偷懒没有做cpu方案，其实如果你愿意，改几行源码实现在CPU上跑应该也不难。
 
-其他依赖  
+其他依赖：  
 ffmpeg安装  
 ```
 sudo apt-get install ffmpeg
 ```
-本项目依赖[whisper](https://github.com/openai/whisper)，所以下载模型的时候国内可能会比较慢，可自行寻找解决方案whisper
+[faster-whisper](https://github.com/SYSTRAN/faster-whisper/)下载自动模型的时候，国内可能会比较慢，甚至无法下载！！faster-whisper_models目录中，使得目录结构为：
+```
+faster-whisper_models
+     |-models--Systran--faster-whisper-base.en
+     |-models--Systran--faster-whisper-medium
+     |-...
+```
 
+### 运行
+```
+flask run --host=0.0.0.0 --debug
+```
 
-## API说明
+然后浏览器打开http://127.0.0.1:5000.
+
+# API说明
+[API文档](./doc/api.md)
+
+# 技术关注&开发计划
+后续计划：谨慎添加更多可靠的功能，增加其他语言到中文的翻译
+| 项目名称 | 功能 | 当前状况 | 计划 |
+| --- | --- | --- | --- |
+| [whisper](https://github.com/openai/whisper)、[stable-whisper](https://github.com/jianfch/stable-ts)| 语言转字幕| 效果不如faster-whisper | 不添加 |
+| [Funasr](https://gitcode.com/alibaba-damo-academy/FunASR/)| 语言转字幕| 还没验证 | 验证后再决策 |
+| [GPT-SoVITS](https://github.com/RVC-Boss/GPT-SoVITS)| TTS | TTS输出不稳定 | 观望|
+| [ChatTTS](https://github.com/2noise/ChatTTS) | TTS | TTS输出不稳定 | 观望 |
+| [Open AI TTS](https://platform.openai.com/docs/guides/text-to-speech) | TTS | 要钱 | 后续添加 |
+| [EmotiVoice](https://github.com/netease-youdao/EmotiVoice) | TTS | 不稳定 | 观望 |
+| [StreamSpeech](https://github.com/ictnlp/StreamSpeech) | TTS | 还没验证 | 验证后再决策|
+| 百度翻译、有道翻译、迅飞翻译 | 翻译 | 效果远不如谷歌 | 不添加 |
+| [ChatGpt](https://chatgpt.com) | 翻译 | 效果不错 | 后续添加 |
 
 
 
 # 主要上游开源项目
+ - [pytvzhen](https://github.com/CuSO4Gem/pytvzhen)
  - [pytube](https://github.com/pytube/pytube)
  - [ffmpeg](https://ffmpeg.org/)
  - [stable-ts](https://github.com/jianfch/stable-ts)
@@ -51,26 +131,4 @@ sudo apt-get install ffmpeg
  - [edge-tts](https://github.com/hasscc/hass-edge-tts)
  - [GPT-SoVITS](https://github.com/RVC-Boss/GPT-SoVITS)
  - [moviepy](https://github.com/Zulko/moviepy)
-
-
-# 网页版开发
-
-在本地目录，跑Flask服务器
-
-```
-flask run --host=0.0.0.0 --debug
-```
-
-然后浏览器打开http://127.0.0.1:5000.
-
-构建Docker镜像
-
-```shell
-docker build -t hanfa/pytvzhen-web:latest .
-```
-
-运行Docker容器
-```shell
-docker run --rm -p 8080:8080 -v output:/app/output hanfa/pytvzhen-web:latest
-```
 
