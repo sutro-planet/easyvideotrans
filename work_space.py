@@ -561,8 +561,9 @@ def zhVideoPreview(logger, videoFileNameAndPath, voiceFileNameAndPath, insturmen
         final_audio = insturment_clip
 
     video_clip = video_clip.set_audio(final_audio)
-    video_clip.write_videofile(outputFileNameAndPath, codec='libx264', audio_codec='aac', remove_temp=True)
-
+    video_clip.write_videofile(outputFileNameAndPath, codec='libx264', audio_codec='aac',
+                               remove_temp=True, logger=None)
+    video_clip.close()
     return True
 
 
@@ -605,8 +606,7 @@ def voiceConnect(logger, sourceDir, outputAndPath, warningFilePath):
             audioEndPosition = audioPosition + audio.duration_seconds * 1000 + MIN_GAP_DURATION * 1000
             audioNextPosition = voiceMapSrt[i + 1].start.total_seconds() * 1000
             if audioNextPosition < audioEndPosition:
-                speedUp = (audio.duration_seconds * 1000 + MIN_GAP_DURATION * 1000) / (
-                    audioNextPosition - audioPosition)
+                speedUp = (audio.duration_seconds * 1000 + MIN_GAP_DURATION * 1000) / (audioNextPosition - audioPosition)
                 seconds = audioPosition / 1000.0
                 timeStr = str(datetime.timedelta(seconds=seconds))
                 if speedUp > MAX_SPEED_UP:

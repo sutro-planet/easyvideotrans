@@ -51,8 +51,10 @@
 # 部署
 
 ## Docker部署（推荐）
+
+
 ```shell
-docker run --rm -p 8080:8080 -v output:/app/output hanfa/pytvzhen-web:latest
+sudo docker run --rm -p 8888:8080 -v output:/app/output --runtime=nvidia --gpus all hanfa/pytvzhen-web:latest
 ```
 
 
@@ -69,6 +71,10 @@ pytorch安装：
 在[点击这里](https://pytorch.org/get-started/locally/)，选择合适的安装版本，**必须要选择gpu版！！！！** 原因是作者偷懒没有做cpu方案，其实如果你愿意，改几行源码实现在CPU上跑应该也不难。
 
 其他依赖：
+
+确保 RabbitMQ 作为broker在[./configs/celery.json](./configs/celery.json)里定义的`broker_url`运行，
+具体方法参考[这里](https://www.rabbitmq.com/docs/download)，用`sudo rabbitmqctl status` 确保其正常运行。
+
 ffmpeg安装
 ```
 sudo apt-get install ffmpeg
@@ -82,6 +88,12 @@ faster-whisper_models
 ```
 
 ### 运行
+
+在一个 terminal 里面启动 Celery 队列和 worker 来处理视频渲染请求。
+
+`celery -A celery_tasks.celery_app worker --concurrency 1 -Q video_preview`
+
+在另一个 terminal 里运行flask app。
 ```
 flask run --host=0.0.0.0 --debug
 ```

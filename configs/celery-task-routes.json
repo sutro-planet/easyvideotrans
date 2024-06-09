@@ -1,0 +1,5 @@
+{
+  "celery_tasks.tasks.video_preview_task": {
+    "queue": "video_preview"
+  }
+}
