@@ -11,13 +11,16 @@ import shutil
 import uuid
 
 from tools.audio_remove import audio_remove
+from celery_tasks.tasks import video_preview_task
+from celery_tasks.celery_utils import get_queue_length
 from work_space import transcribeAudioEn, srtSentanceMerge, srtFileGoogleTran, srtFileDeeplTran, srtFileGPTTran, \
-    voiceConnect, zhVideoPreview, srtToVoiceEdge
+    voiceConnect, srtToVoiceEdge
 
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.config.from_file("./pytvzhen-config.json", load=json.load)
+app.config.from_file("./configs/pytvzhen.json", load=json.load)
+
 metrics = PrometheusMetrics(app)
 metrics.info('pytvzhen_web', 'Pytvzhen backend API', version='1.0.0')
 
@@ -591,21 +594,16 @@ def video_preview(video_id):
 
     data = request.get_json()
     video_id = data['video_id']
-    voice_connect_fn = video_id + "_zh.wav"
-    voice_connect_path = os.path.join(output_path, voice_connect_fn)
-    audio_bg_fn = f'{video_id}_bg.wav'
-    audio_bg_path = os.path.join(output_path, audio_bg_fn)
-    video_fn = f"{video_id}.mp4"
-    video_fhd = f"{video_id}_fhd.mp4"
-    video_save_path = os.path.join(output_path, video_fn)
-    video_fhd_save_path = os.path.join(output_path, video_fhd)
-    video_out_fn = f"{video_id}_preview.mp4"
-    video_out_path = os.path.join(output_path, video_out_fn)
+    voice_connect_path = os.path.join(output_path, video_id + "_zh.wav")
+    audio_bg_path = os.path.join(output_path, f'{video_id}_bg.wav')
+    video_save_path = os.path.join(output_path, f"{video_id}.mp4")
+    video_fhd_save_path = os.path.join(output_path, f"{video_id}_fhd.mp4")
+    video_out_path = os.path.join(output_path, f"{video_id}_preview.mp4")
 
     # 检查音频
     if (not os.path.exists(voice_connect_path)) or (not os.path.exists(audio_bg_path)):
         return jsonify({"message": log_warning_return_str(
-            f'Chinese Voice {voice_connect_fn} not found at {output_path}')}), 404
+            f'Chinese Voice {video_id + "_zh.wav"} not found at {output_path}')}), 404
 
     # 检查视频
     if (not os.path.exists(video_save_path)) and (not os.path.exists(video_fhd_save_path)):
@@ -618,15 +616,49 @@ def video_preview(video_id):
     else:
         video_source_path = video_save_path
 
+    blocking = data.get('blocking', False)
+
     # 生成视频预览
-    ret = zhVideoPreview(app.logger, video_source_path, voice_connect_path, audio_bg_path,
-                         "暂时没有处理字幕文件，所以随便写", video_out_path)
-    if ret:
+    if blocking:
+        video_preview_task.apply_async(args=(video_source_path, voice_connect_path, audio_bg_path, video_out_path)).get()
         return jsonify({"message": log_info_return_str(
-            f"Video preview {video_fhd} successfully."),
-            "video_id": video_id}), 200
+            f"Video preview {video_id} successfully rendered.")}), 200
+
+    task = video_preview_task.delay(video_source_path, voice_connect_path, audio_bg_path, video_out_path)
+
+    queue_length = get_queue_length('video_preview')
+    return jsonify({
+        "message": log_info_return_str(f"Submitted video preview task {task.id}."),
+        "video_preview_task_id": task.id,
+        'queue_length': queue_length
+    }), 202
+
+
+@app.route('/video_preview_status/<task_id>', methods=['GET'])
+@pytvzhen_api_request_counter
+def video_preview_status(task_id):
+    task = video_preview_task.AsyncResult(task_id)
+    queue_length = get_queue_length('video_preview')
+    if task.state == 'PENDING':
+        response = {
+            'state': task.state,
+            'status': f'Video preview task {task_id} pending...',
+            'queue_length': queue_length
+        }
+    elif task.state != 'FAILURE':
+        response = {
+            'state': task.state,
+            'status': str(task.info),
+            'queue_length': queue_length
+        }
     else:
-        return jsonify({"message": log_warning_return_str("Video preview failed.")}), 404
+        response = {
+            'state': task.state,
+            'status': str(task.info),
+            'result': str(task.result),
+            'queue_length': queue_length
+        }
+    return jsonify(response)
 
 
 @app.route('/video_preview/<video_id>', methods=['GET'])
@@ -642,3 +674,7 @@ def video_preview_serve(video_id):
 
     return jsonify({"message": log_warning_return_str(
         f'Video preview {video_preview_fn} not found at {video_preview_path}')}), 404
+
+
+if __name__ == '__main__':
+    app.run(host="0.0.0.0", port=5000)

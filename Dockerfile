@@ -1,13 +1,16 @@
 # Use an official NVIDIA runtime with CUDA and Miniconda as a parent image
 FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
 
-RUN apt-get update && apt-get install ffmpeg -y
+RUN apt-get update && apt-get install ffmpeg supervisor -y
 
 # Set the working directory in the container to /app
 WORKDIR /app
 
 # Add the current directory contents into the container at /app
 ADD . /app
+
+# Copy the supervisord configuration file
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Install dependencies
 RUN pip install --upgrade pip
@@ -24,5 +27,5 @@ ENV FLASK_DEBUG 0
 ARG PYTVZHEN_STAGE=beta
 ENV PYTVZHEN_STAGE=${PYTVZHEN_STAGE}
 
-# Run app.py when the container launches
-CMD [ "/bin/bash", "-c", "python -m flask run --host=0.0.0.0" ]
+# Run supervisord to start both Flask and Celery
+CMD ["/usr/bin/supervisord"]
