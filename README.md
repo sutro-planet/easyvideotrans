@@ -5,9 +5,9 @@
   <img src="assets/cartography.png" alt="alt text">
 </a>
 
-<h1>EasyVideoTrans</h1>
+<h1><a href="https://github.com/sutro-planet/pytvzhen-web">EasyVideoTrans</a></h1>
 <h3>
-易用AI频翻译配音工具的web后端<br />
+<a href="https://github.com/sutro-planet/pytvzhen-web">易用AI频翻译配音工具的web后端</a><br />
 </h3>
 
 <div style="text-align: center;">
@@ -22,7 +22,8 @@
 </div>
 
 # 简介
-本项目着眼于从原始视频到翻译后最终视频的整个工作流程，确保从一而终的整个过程顺畅高效。项目提供了web后端，方便<br>
+本项目着眼于从原始视频到翻译后最终视频的整个工作流程，确保从一而终的整个过程顺畅高效。项目提供了web后端和一个用于测试的前端页面<br>
+[本项目测试地址](https://github.com/sutro-planet/easyvideotrans)
 <br>
 本方案优势：
 - 方案简单好用，经过验证，十分可靠，避免被巨量的不靠普方案迷惑，节约用户选择成本。<br>
