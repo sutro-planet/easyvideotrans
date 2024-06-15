@@ -143,6 +143,13 @@ def yt_download(video_id):
                         "video_id": video_id}), 200
 
     try:
+
+        # 限制视频长度
+        yt = YouTube(f'https://www.youtube.com/watch?v={video_id}', proxies=None)
+        if yt.length > app.config['VIDEO_MAX_DURATION']:
+            return jsonify({"message": log_error_return_str(
+        f'Video duration is too long. Please select videos with duration less than {app.config["VIDEO_MAX_DURATION"]} seconds. ')}), 400
+
         # 下载标清视频
         if not os.path.exists(video_save_path):
             yt = YouTube(f'https://www.youtube.com/watch?v={video_id}', proxies=None)
