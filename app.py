@@ -148,7 +148,7 @@ def yt_download(video_id):
         yt = YouTube(f'https://www.youtube.com/watch?v={video_id}', proxies=None)
         if yt.length > app.config['VIDEO_MAX_DURATION']:
             return jsonify({"message": log_error_return_str(
-        f'Video duration is too long. Please select videos with duration less than {app.config["VIDEO_MAX_DURATION"]} seconds. ')}), 400
+                f'Video duration is too long. Please select videos with duration less than {app.config["VIDEO_MAX_DURATION"]} seconds. ')}), 400
 
         # 下载标清视频
         if not os.path.exists(video_save_path):
@@ -627,7 +627,8 @@ def video_preview(video_id):
 
     # 生成视频预览
     if blocking:
-        video_preview_task.apply_async(args=(video_source_path, voice_connect_path, audio_bg_path, video_out_path)).get()
+        video_preview_task.apply_async(
+            args=(video_source_path, voice_connect_path, audio_bg_path, video_out_path)).get()
         return jsonify({"message": log_info_return_str(
             f"Video preview {video_id} successfully rendered.")}), 200
 

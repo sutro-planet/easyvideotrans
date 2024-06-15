@@ -1,7 +1,7 @@
 {
   "broker_domain": "localhost",
   "broker_url": "pyamqp://guest@localhost:5672//",
-  "result_backend": "rpc://",
+  "result_backend": "file:///app/celery_results",
   "worker_prefetch_multiplier": 1,
   "task_acks_late": true
 }
