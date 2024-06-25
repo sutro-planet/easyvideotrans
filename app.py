@@ -452,7 +452,7 @@ def translated_zh_upload():
     # if user does not select file, browser also
     # submit an empty part without filename
     if file and get_extension(file.filename):
-        filename = video_id + "_zh_merge.srt"
+        filename = video_id + "_zh_merged.srt"
         print("save:" + filename)
         file.save(os.path.join(output_path, filename))
         return jsonify({"message": log_info_return_str(f"SRT {filename} uploaded")})
