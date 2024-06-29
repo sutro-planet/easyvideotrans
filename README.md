@@ -42,6 +42,7 @@
 # 目录
 - [简介](#简介)
 - [目录](#目录)
+- [相关项目介绍](#相关项目介绍)
 - [部署](#部署)
   - [Docker部署（推荐）](#docker部署推荐)
   - [本地部署](#本地部署)
@@ -50,6 +51,10 @@
 - [API说明](#api说明)
 - [技术关注\&开发计划](#技术关注开发计划)
 - [主要上游开源项目](#主要上游开源项目)
+
+# 相关项目介绍
+[easyvideotrans-frontend](https://github.com/sutro-planet/easyvideotrans-frontend)正式web前端  
+[pytvzhen](https://github.com/CuSO4Gem/pytvzhen)离线客户端
 
 # 部署
 
