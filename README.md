@@ -96,12 +96,14 @@ faster-whisper_models
 ```
 
 ### 运行
+0. 修改配置
+修改pytvzhen.json中的**VIDEO_MAX_DURATION**，配置下载视频的最大长度，单位为秒。
 
-在一个 terminal 里面启动 Celery 队列和 worker 来处理视频渲染请求。
+1. 在一个 terminal 里面启动 Celery 队列和 worker 来处理视频渲染请求。
 
 `celery -A celery_tasks.celery_app worker --concurrency 1 -Q video_preview`
 
-在另一个 terminal 里运行flask app。
+2. 在另一个 terminal 里运行flask app。
 ```
 flask run --host=0.0.0.0 --debug
 ```
