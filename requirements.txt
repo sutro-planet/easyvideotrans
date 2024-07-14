@@ -104,7 +104,7 @@ pygtrans==1.5.3
 PySocks==1.7.1
 pysubs2==1.6.1
 python-dateutil==2.9.0.post0
-pytube==15.0.0
+git+https://github.com/sutro-planet/pytube.git@pytube_fix
 PyYAML==6.0.1
 pyzmq==26.0.2
 referencing==0.34.0
@@ -139,7 +139,6 @@ torchvision==0.17.2
 tornado==6.4
 tqdm==4.66.2
 traitlets==5.14.2
-triton==2.2.0
 typing_extensions==4.10.0
 urllib3==1.26.5
 wcwidth==0.2.13
