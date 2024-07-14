@@ -538,6 +538,18 @@ def srtToVoiceEdge(logger, srtFileNameAndPath, outputDir, character="zh-CN-Xiaoy
     return True
 
 
+def srtToVoiceChatTTS(logger, srtFileNameAndPath, outputDir):
+    # create output directory if not exists
+    if not os.path.exists(outputDir):
+        os.makedirs(outputDir)
+
+    srtContent = open(srtFileNameAndPath, "r", encoding="utf-8").read()
+    subGenerator = srt.parse(srtContent)
+    subTitleList = list(subGenerator)
+
+
+    pass
+
 def zhVideoPreview(logger, videoFileNameAndPath, voiceFileNameAndPath, insturmentFileNameAndPath, srtFileNameAndPath,
                    outputFileNameAndPath):
     # 从moviepy.editor导入VideoFileClip的创建音-视频剪辑
