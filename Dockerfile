@@ -1,7 +1,11 @@
 # Use an official NVIDIA runtime with CUDA and Miniconda as a parent image
 FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
 
-RUN apt-get update && apt-get install ffmpeg supervisor -y
+# Disable interactive debian
+ENV TZ=America/New_York \
+    DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install ffmpeg supervisor git -y
 
 # Set the working directory in the container to /app
 WORKDIR /app

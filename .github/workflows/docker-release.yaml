@@ -1,9 +1,9 @@
-name: Pytvzhen-web Docker Image CI
+name: Pytvzhen-web Docker Image Release
 
 on:
   workflow_run:
     workflows: [ "Pytvzhen-web application test" ]
-    branches: [ master ]
+    branches: [ "master" ]
     types:
       - completed
 
