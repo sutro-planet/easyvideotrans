@@ -1,10 +1,11 @@
 name: Pytvzhen-web Docker Image CI
 
 on:
-  push:
+  workflow_run:
+    workflows: [ "Pytvzhen-web application test" ]
     branches: [ master ]
-  pull_request:
-    branches: [ master ]
+    types:
+      - completed
 
 jobs:
   build:

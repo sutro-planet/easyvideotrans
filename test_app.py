@@ -38,10 +38,15 @@ class PytvzhenAPITest(unittest.TestCase):
         self.app.testing = True
 
     def test_download_yt_video_with_valid_video_id(self):
-        print("download to " + self.test_dir)
         response = self.app.post("/yt_download", json={'video_id': 'VwhT-P3pLJs'})
         assert response.status_code == 200
         assert os.path.isfile(os.path.join(self.test_dir, 'VwhT-P3pLJs.mp4'))
+
+    def test_download_yt_video_pytube_issue(self):
+        # https://stackoverflow.com/questions/71883661/pytube-error-get-throttling-function-name-could-not-find-match-for-multiple
+        response = self.app.post("/yt_download", json={'video_id': 'SrvXsYxbgC4'})
+        assert response.status_code != 500, "Pytube fix not applied, see https://github.com/pytube/pytube/pull/1312"
+        assert response.status_code == 200
 
     def tearDown(self):
         for root, dirs, files in os.walk(self.test_dir, topdown=False):
