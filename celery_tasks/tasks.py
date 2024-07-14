@@ -3,6 +3,12 @@ from work_space import zhVideoPreview
 
 
 @celery_app.task(bind=True)
+def chattts_task(self):
+    print(f"Invoke ChatTTS task {self.request.id}.")
+    pass
+
+
+@celery_app.task(bind=True)
 def video_preview_task(self, video_path, voice_path, audio_bg_path, video_out_path):
     print(f"Invoke video preview task {self.request.id}.")
     _ = zhVideoPreview(None, video_path, voice_path, audio_bg_path,

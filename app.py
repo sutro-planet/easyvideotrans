@@ -532,6 +532,13 @@ def voice_connect_serve(video_id):
         f'Voice connect {voice_connect_fn} not found at {voice_connect_path}')}), 404
 
 
+
+@app.route('/chattts', methods=['POST'])
+@pytvzhen_api_request_counter
+@require_video_id_from_post_request
+def chattts(video_id):
+    pass
+
 @app.route('/tts', methods=['POST'])
 @pytvzhen_api_request_counter
 @require_video_id_from_post_request

@@ -1,4 +1,8 @@
 {
+  "chattts_task.tasks.chattts_task": {
+    "queue": "chattts"
+  },
+
   "celery_tasks.tasks.video_preview_task": {
     "queue": "video_preview"
   }
