@@ -8,19 +8,6 @@ import sys
 
 chat = ChatTTS.Chat()
 
-rand_spk = chat.sample_random_speaker()
-print(rand_spk)  # save it for later timbre recovery
-
-params_infer_code = ChatTTS.Chat.InferCodeParams(
-    spk_emb = rand_spk, # add sampled speaker
-    temperature = .3,   # using custom temperature
-    top_P = 0.7,        # top P decode
-    top_K = 20,         # top K decode
-)
-
-params_refine_text = ChatTTS.Chat.RefineTextParams(
-    prompt='[oral_2][laugh_0][break_6]',
-)
 
 
 # @jit
@@ -112,6 +99,20 @@ if __name__ == '__main__':
     else:
         print("Models load failed.")
         sys.exit(1)
+
+    rand_spk = chat.sample_random_speaker()
+    print(rand_spk)  # save it for later timbre recovery
+
+    params_infer_code = ChatTTS.Chat.InferCodeParams(
+        spk_emb=rand_spk,  # add sampled speaker
+        temperature=.3,  # using custom temperature
+        top_P=0.7,  # top P decode
+        top_K=20,  # top K decode
+    )
+
+    params_refine_text = ChatTTS.Chat.RefineTextParams(
+        prompt='[oral_2][laugh_0][break_6]',
+    )
 
     testTexts = ["四川美食确实以辣闻名，但也有不辣的选择。比如甜水面、赖汤圆、蛋烘糕、叶儿粑等，这些小吃口味温和，甜而不腻，也很受欢迎。"]
 
