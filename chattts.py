@@ -130,10 +130,9 @@ def generate_audio(text, spk_emb_text: str, file_name, temperature=0.3, top_P=0.
         params_infer_code=params_infer_code,
     )
 
-    for index, wav in enumerate(wavs):
-        wav = float_to_int16(wav)
-        tf = torch.from_numpy(wav)
-        torchaudio.save(f"{file_name}_{index}.wav", tf, 24000)
+    wav = float_to_int16(wavs[0])
+    tf = torch.from_numpy(wav)
+    torchaudio.save(file_name, tf, 24000)
     print("Audio generation successful.")
 
 
