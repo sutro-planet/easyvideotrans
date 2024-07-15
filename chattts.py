@@ -126,4 +126,4 @@ if __name__ == '__main__':
     )
     for i in range(len(wavs)):
         print(wavs[i].shape)
-        torchaudio.save(f"basic_output{i}.wav", torch.from_numpy(wavs[i]).unsqueeze(0), 24000)
+        torchaudio.save(f"basic_output{i}.wav", torch.from_numpy(wavs[i]), 24000)
