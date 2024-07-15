@@ -6,6 +6,7 @@ import numpy as np
 from numba import jit
 import sys
 
+torch.set_float32_matmul_precision('high')
 chat = ChatTTS.Chat()
 
 
@@ -124,4 +125,5 @@ if __name__ == '__main__':
         params_infer_code=params_infer_code,
     )
     for i in range(len(wavs)):
+        print(wavs[i].shape)
         torchaudio.save(f"basic_output{i}.wav", torch.from_numpy(wavs[i]).unsqueeze(0), 24000)
