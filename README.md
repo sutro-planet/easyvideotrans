@@ -2,7 +2,7 @@
 <div align="center"><a name="readme-top"></a>
 
 <a href="https://github.com/sutro-planet/pytvzhen-web" target="_blank">
-  <img src="assets/cartography.png" alt="alt text">
+  <img src="doc/assets/cartography.png" alt="alt text">
 </a>
 
 <h1><a href="https://github.com/sutro-planet/pytvzhen-web">EasyVideoTrans</a></h1>
@@ -35,7 +35,7 @@
 在[技术关注&开发计划](#技术关注开发计划)部分，我们列出了本方案的主要技术关注点，以及后续的开发计划。本项目重点强调易用、可靠、以及产生最终最终视频的速度。因此我们排除了大量不稳定、不可靠的方案，进保留整个工作流程中最好用的方案献给广大用户。
 
 <p align="center">
-<img src="assets/logo.png" alt="图片">
+<img src="doc/assets/logo.png" alt="图片">
 </p>
 
 

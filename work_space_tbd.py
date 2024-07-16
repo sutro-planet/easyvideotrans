@@ -1,6 +1,5 @@
-from tools.audio_remove import audio_remove
-from tools.warning_file import WarningFile
-
+from tools_tbd.audio_remove import audio_remove
+from tools_tbd.warning_file import WarningFile
 import os
 import copy
 import json
@@ -23,14 +22,14 @@ import deepl
 import wave
 import math
 import struct
-from tools.trans_llm import TranslatorClass
+from tools_tbd.trans_llm import TranslatorClass
 import tenacity
 
 PROXY = ""
 proxies = None
 TTS_MAX_TRY_TIMES = 16
 CHATGPT_URL = "https://api.openai.com/v1/"
-GHATGPT_TERMS_FILE = "tools/terms.json"
+GHATGPT_TERMS_FILE = "tools_tbd/terms.json"
 
 paramDictTemplate = {
     "proxy": "127.0.0.1:7890",  # 代理地址，留空则不使用代理
@@ -606,7 +605,8 @@ def voiceConnect(logger, sourceDir, outputAndPath, warningFilePath):
             audioEndPosition = audioPosition + audio.duration_seconds * 1000 + MIN_GAP_DURATION * 1000
             audioNextPosition = voiceMapSrt[i + 1].start.total_seconds() * 1000
             if audioNextPosition < audioEndPosition:
-                speedUp = (audio.duration_seconds * 1000 + MIN_GAP_DURATION * 1000) / (audioNextPosition - audioPosition)
+                speedUp = (audio.duration_seconds * 1000 + MIN_GAP_DURATION * 1000) / (
+                        audioNextPosition - audioPosition)
                 seconds = audioPosition / 1000.0
                 timeStr = str(datetime.timedelta(seconds=seconds))
                 if speedUp > MAX_SPEED_UP:

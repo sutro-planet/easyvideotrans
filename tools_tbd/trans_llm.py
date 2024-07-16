@@ -115,7 +115,7 @@ def main():
     translator = TranslatorClass(api_key, proxies=proxies)
 
     # 加载术语文件
-    terms_file = 'tools/terms.json'
+    terms_file = 'tools_tbd/terms.json'
     translator.load_terms(terms_file)
 
     # 单个文本翻译

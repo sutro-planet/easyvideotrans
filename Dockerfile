@@ -14,7 +14,7 @@ WORKDIR /app
 ADD . /app
 
 # Copy the supervisord configuration file
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY configs/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Install dependencies
 RUN pip install --upgrade pip

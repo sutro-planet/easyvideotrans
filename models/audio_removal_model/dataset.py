@@ -6,7 +6,7 @@ import torch.utils.data
 from tqdm import tqdm
 
 try:
-    from lib import spec_utils
+    from models.audio_removal_model import spec_utils
 except ModuleNotFoundError:
     import spec_utils
 
