@@ -1,5 +1,7 @@
+import src
 from tools_tbd.audio_remove import audio_remove
 from tools_tbd.warning_file import WarningFile
+from src.data_models.workflow import Workflow
 import os
 import copy
 import json
@@ -31,31 +33,6 @@ TTS_MAX_TRY_TIMES = 16
 CHATGPT_URL = "https://api.openai.com/v1/"
 GHATGPT_TERMS_FILE = "tools_tbd/terms.json"
 
-paramDictTemplate = {
-    "proxy": "127.0.0.1:7890",  # 代理地址，留空则不使用代理
-    "video Id": "eMlx5fFNoYc",  # 油管视频ID
-    "work path": "conver\\cheak_valve",  # 工作目录
-    "download video": True,  # [工作流程开关]下载视频
-    "download fhd video": True,  # [工作流程开关]下载1080p视频
-    "extract audio": True,  # [工作流程开关]提取音频
-    "audio remove": True,  # [工作流程开关]去除音乐
-    "audio remove model path": "models\\baseline.pth",  # 去音乐模型路径
-    "audio transcribe": True,  # [工作流程开关]语音转文字
-    "audio transcribe model": "base.en",  # [工作流程开关]英文语音转文字模型名称
-    "srt merge": True,  # [工作流程开关]字幕合并
-    "srt merge en to text": True,  # [工作流程开关]英文字幕转文字
-    "srt merge translate": True,  # [工作流程开关]字幕翻译
-    "srt merge translate tool": "google",  # 翻译工具，目前支持google和deepl
-    "srt merge translate key": "",  # 翻译工具的key
-    "srt merge zh to text": True,  # [工作流程开关]中文字幕转文字
-    "srt to voice srouce": True,  # [工作流程开关]字幕转语音
-    "TTS": "edge",  # [工作流程开关]合成语音，目前支持edge和GPT-SoVITS
-    "TTS param": "",  # TTS参数，GPT-SoVITS为地址，edge为角色。edge模式下可以不填，建议不要用GPT-SoVITS。
-    "voice connect": True,  # [工作流程开关]语音合并
-    "audio zh transcribe": True,  # [工作流程开关]合成后的语音转文字
-    "audio zh transcribe model": "medium",  # 中文语音转文字模型名称
-    "video zh preview": True  # [工作流程开关]视频预览
-}
 diagnosisLog = None
 executeLog = None
 
@@ -63,17 +40,6 @@ executeLog = None
 os.environ['PYTHONIOENCODING'] = 'utf-8'
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"  # 强制GPU版本cuda
-
-
-def create_param_template(path):
-    with open(path, "w", encoding="utf-8") as file:
-        json.dump(paramDictTemplate, file, indent=4)
-
-
-def load_param(path):
-    with open(path, "r", encoding="utf-8") as file:
-        paramDict = json.load(file)
-    return paramDict
 
 
 def download_youtube_video(video_id, fileNameAndPath):
@@ -628,9 +594,10 @@ def voiceConnect(logger, sourceDir, outputAndPath, warningFilePath):
 
 
 if __name__ == "__main__":
-
-    print("Please input the path and name of the parameter file (json format): ")
-    paramDirPathAndName = input("json file path")
+    paramDirPathAndName = input("please input the path and name of the parameter file (json format), or press enter "
+                                "to skip\n")
+    if paramDirPathAndName == "":
+        paramDirPathAndName = "data/workflow/default_param_dict.json"
 
     # 检查paramDirPathAndName是否存在，是否为json文件
     if not os.path.exists(paramDirPathAndName) or not os.path.isfile(
@@ -638,39 +605,30 @@ if __name__ == "__main__":
         print("Please select a valid parameter file.")
         exit(-1)
 
-    if not os.path.exists(paramDirPathAndName):
-        create_param_template(paramDirPathAndName)
-        print(f"Parameter file created at {paramDirPathAndName}.")
-        print("Please edit the file and run the script again.")
-        exit(0)
+    workflow = Workflow(paramDirPathAndName)
 
-    paramDict = load_param(paramDirPathAndName)
-    workPath = paramDict["work path"]
-    videoId = paramDict["video Id"]
-    PROXY = paramDict["proxy"]
-    audioRemoveModelNameAndPath = paramDict["audio remove model path"]
-
-    proxies = None if not PROXY else {
-        'http': f"{PROXY}",
-        'https': f"{PROXY}",
-        'socks5': f"{PROXY}"
+    # TODO: change the proxy field to json
+    proxies = None if not workflow.proxy else {
+        'http': f"{workflow.proxy}",
+        'https': f"{workflow.proxy}",
+        'socks5': f"{workflow.proxy}"
     }
 
     # create the working directory if it does not exist
-    if not os.path.exists(workPath):
-        os.makedirs(workPath)
-        print(f"Directory {workPath} created.")
+    if not os.path.exists(workflow.work_path):
+        os.makedirs(workflow.work_path)
+        print(f"Directory {workflow.work_path} created.")
 
-    # 日志
-    logFileName = "diagnosis.log"
-    diagnosisLog = WarningFile(os.path.join(workPath, logFileName))
-    # 执行日志文件的格式为excute_yyyyMMdd_HHmmss.log
-    logFileName = "execute_" + datetime.datetime.now().strftime("%Y%m%d_%H%M%S") + ".log"
-    executeLog = WarningFile(os.path.join(workPath, logFileName))
-
-    nowString = str(datetime.datetime.now())
-    executeLog.write(f"Start at: {nowString}")
-    executeLog.write("Params\n" + json.dumps(paramDict, indent=4) + "\n")
+    # TODO: 日志系统需要改造
+    # logFileName = "diagnosis.log"
+    # diagnosisLog = WarningFile(os.path.join(workPath, logFileName))
+    # # 执行日志文件的格式为excute_yyyyMMdd_HHmmss.log
+    # logFileName = "execute_" + datetime.datetime.now().strftime("%Y%m%d_%H%M%S") + ".log"
+    # executeLog = WarningFile(os.path.join(workPath, logFileName))
+    #
+    # nowString = str(datetime.datetime.now())
+    # executeLog.write(f"Start at: {nowString}")
+    # executeLog.write("Params\n" + json.dumps(paramDict, indent=4) + "\n")
 
     # 下载视频
     voiceFileName = f"{videoId}.mp4"
