@@ -1,7 +1,7 @@
 import os
 import json
 
-from pytube import YouTube
+from pytubefix import YouTube
 from moviepy.editor import VideoFileClip
 from functools import wraps
 from flask import Flask, request, jsonify, render_template, send_from_directory

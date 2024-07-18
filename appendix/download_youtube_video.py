@@ -1,6 +1,6 @@
 from os import makedirs
-from pytube import YouTube
-from pytube.helpers import safe_filename
+from pytubefix import YouTube
+from pytubefix.helpers import safe_filename
 
 
 def download_youtube_video(url, itag=None, audio_only=False, output_path=None,
