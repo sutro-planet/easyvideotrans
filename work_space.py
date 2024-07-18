@@ -4,8 +4,8 @@ from tools.warning_file import WarningFile
 import os
 import copy
 import json
-from pytube import YouTube
-from pytube.cli import on_progress
+from pytubefix import YouTube
+from pytubefix.cli import on_progress
 from faster_whisper import WhisperModel
 import srt
 import re

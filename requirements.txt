@@ -104,7 +104,7 @@ pygtrans==1.5.3
 PySocks==1.7.1
 pysubs2==1.6.1
 python-dateutil==2.9.0.post0
-git+https://github.com/sutro-planet/pytube.git@pytube_fix
+pytubefix==6.2.2
 PyYAML==6.0.1
 pyzmq==26.0.2
 referencing==0.34.0
