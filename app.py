@@ -1,5 +1,6 @@
 import os
 import json
+import requests
 
 from pytubefix import YouTube
 from moviepy.editor import VideoFileClip
@@ -127,6 +128,34 @@ def video_upload():
         return jsonify({"message", log_error_return_str(f"Video upload failed: {file.filename} extension not allowed")})
 
 
+@app.route('/yt_thumbnail', methods=['POST'])
+@pytvzhen_api_request_counter
+@require_video_id_from_post_request
+def yt_thumbnail(video_id):
+    output_path = app.config['OUTPUT_PATH']
+    thumbnail_fn = f"{video_id}_thumbnail.png"
+
+    if os.path.isfile(thumbnail_fn):
+        return send_from_directory(output_path, thumbnail_fn, mimetype='image/png')
+
+    thumbnail_save_path = os.path.join(output_path, thumbnail_fn)
+    try:
+        yt = YouTube(f'https://www.youtube.com/watch?v={video_id}', proxies=None)
+
+        response = requests.get(yt.thumbnail_url)
+        if response.status_code == 200:
+            with open(thumbnail_save_path, 'wb') as file:
+                file.write(response.content)
+            return send_from_directory(output_path, thumbnail_fn, mimetype='image/png')
+
+        raise Exception(f"thumbnail download failed: {response.status_code} {response.content}")
+    except Exception as e:
+        exception = e
+
+    return jsonify({"message": log_error_return_str(
+        f'An error occurred while downloading video thumbnail {video_id} to {thumbnail_save_path}: {exception}')}), 500
+
+
 @app.route('/yt_download', methods=['POST'])
 @pytvzhen_api_request_counter
 @require_video_id_from_post_request
@@ -169,7 +198,7 @@ def yt_download(video_id):
         exception = e
 
     return jsonify({"message": log_error_return_str(
-        f'An error occurred while downloading video  {video_id} to {video_save_path}: {exception}')}), 500
+        f'An error occurred while downloading video {video_id} to {video_save_path}: {exception}')}), 500
 
 
 @app.route('/yt/<video_id>', methods=['GET'])
