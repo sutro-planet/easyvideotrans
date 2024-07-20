@@ -1,4 +1,6 @@
 import os
+import random
+import string
 
 import cv2
 import numpy as np
@@ -28,3 +30,10 @@ def imwrite(filename, img, params=None):
     except Exception as e:
         print(e)
         return False
+
+
+def generate_random_string(length):
+    # Define the characters to choose from
+    characters = string.ascii_letters + string.digits
+    # Generate a random string of specified length
+    return ''.join(random.choice(characters) for _ in range(length))

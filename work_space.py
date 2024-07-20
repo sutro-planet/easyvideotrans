@@ -1,5 +1,8 @@
+from celery_tasks.tasks import chattts_task
+from lib import utils
 from tools.audio_remove import audio_remove
 from tools.warning_file import WarningFile
+from celery import group
 
 import os
 import copy
@@ -537,6 +540,36 @@ def srtToVoiceEdge(logger, srtFileNameAndPath, outputDir, character="zh-CN-Xiaoy
     print("Convert srt to wav voice successfully")
     return True
 
+
+def srtToVoiceChatTTS(logger, srtFileNameAndPath, outputDir):
+    # create output directory if not exists
+    if not os.path.exists(outputDir):
+        os.makedirs(outputDir)
+
+    srtContent = open(srtFileNameAndPath, "r", encoding="utf-8").read()
+    subGenerator = srt.parse(srtContent)
+    subTitleList = list(subGenerator)
+    index = 1
+    fileNames = []
+    randomPrefix = utils.generate_random_string(10)
+
+    tasks = []
+    for subTitle in subTitleList:
+        fileName = randomPrefix + str(index) + ".wav"
+        outputNameAndPath = os.path.join(outputDir, fileName)
+        fileNames.append(fileName)
+        tasks.append(chattts_task(text=subTitle.content, file_name=outputNameAndPath))
+        index += 1
+
+    tasks_group = group(*tasks)
+    # Enqueue the group of tasks asynchronously
+    result_group = tasks_group.apply_async()
+    # Wait for all tasks in the group to finish
+    # TODO: Change this to non-blocking logic
+    results = result_group.get()
+    print(results)
+
+    pass
 
 def zhVideoPreview(logger, videoFileNameAndPath, voiceFileNameAndPath, insturmentFileNameAndPath, srtFileNameAndPath,
                    outputFileNameAndPath):
