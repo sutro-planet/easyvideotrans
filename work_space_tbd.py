@@ -7,10 +7,7 @@ import copy
 import json
 from pytube import YouTube
 from pytube.cli import on_progress
-from faster_whisper import WhisperModel
 import srt
-import re
-from pygtrans import Translate
 import requests
 from tqdm import tqdm
 from pydub import AudioSegment
@@ -20,18 +17,13 @@ import datetime
 from moviepy.editor import VideoFileClip, AudioFileClip, CompositeAudioClip
 import sys
 import traceback
-import deepl
-import wave
-import math
-import struct
-from tools_tbd.trans_llm import TranslatorClass
 import tenacity
 
 PROXY = ""
 proxies = None
 TTS_MAX_TRY_TIMES = 16
 CHATGPT_URL = "https://api.openai.com/v1/"
-GHATGPT_TERMS_FILE = "tools_tbd/terms.json"
+GHATGPT_TERMS_FILE = "configs/gpt_terms.json"
 
 diagnosisLog = None
 executeLog = None
@@ -40,110 +32,6 @@ executeLog = None
 os.environ['PYTHONIOENCODING'] = 'utf-8'
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"  # 强制GPU版本cuda
-
-
-def googleTrans(texts):
-    if PROXY == "":
-        client = Translate()
-    else:
-        client = Translate(proxies={'https': proxies['https']})
-    textsResponse = client.translate(texts, target='zh')
-    textsTranslated = []
-    for txtResponse in textsResponse:
-        textsTranslated.append(txtResponse.translatedText)
-    return textsTranslated
-
-
-def deeplTranslate(texts, key):
-    translator = deepl.Translator(key)
-    # list to string
-    textEn = ""
-    for oneLine in texts:
-        textEn += oneLine + "\n"
-
-    textZh = translator.translate_text(textEn, target_lang="zh")
-    textZh = str(textZh)
-    textsZh = textZh.split("\n")
-    return textsZh
-
-
-def srtFileGoogleTran(logger, sourceFileNameAndPath, outputFileNameAndPath):
-    srtContent = open(sourceFileNameAndPath, "r", encoding="utf-8").read()
-    subGenerator = srt.parse(srtContent)
-    subTitleList = list(subGenerator)
-    contentList = []
-    for subTitle in subTitleList:
-        contentList.append(subTitle.content)
-
-    contentList = googleTrans(contentList)
-    for i in range(len(subTitleList)):
-        subTitleList[i].content = contentList[i]
-
-    srtContent = srt.compose(subTitleList)
-    with open(outputFileNameAndPath, "w", encoding="utf-8") as file:
-        file.write(srtContent)
-
-    return True
-
-
-def srtFileDeeplTran(logger, sourceFileNameAndPath, outputFileNameAndPath, key):
-    srtContent = open(sourceFileNameAndPath, "r", encoding="utf-8").read()
-    subGenerator = srt.parse(srtContent)
-    subTitleList = list(subGenerator)
-    contentList = []
-    for subTitle in subTitleList:
-        contentList.append(subTitle.content)
-
-    contentList = deeplTranslate(contentList, key)
-
-    for i in range(len(subTitleList)):
-        subTitleList[i].content = contentList[i]
-
-    srtContent = srt.compose(subTitleList)
-    with open(outputFileNameAndPath, "w", encoding="utf-8") as file:
-        file.write(srtContent)
-    return True
-
-
-def GPTTranslate(texts, key, model, proxies):
-    translator = TranslatorClass(api_key=key,
-                                 base_url=CHATGPT_URL,
-                                 model_name=model,
-                                 proxies=proxies)
-    # 加载术语文件
-    translator.load_terms(GHATGPT_TERMS_FILE)
-    # list to string
-    textEn = ""
-    for oneLine in texts:
-        textEn += oneLine + "\n"
-    batch_text = textEn.split("\n")
-    print("Start to translate by GPT with Batch mode.")
-    results = translator.translate_batch(batch_text, max_tokens=1200)
-    textsZh = []
-    for i, result in enumerate(results, 1):
-        print(f"Translated text {i}:", result['text_result'])
-        print(f"Process time {i}:", result['time'])
-        textsZh.append(result['text_result'])
-    return textsZh
-
-
-def srtFileGPTTran(logger, model, proxies, sourceFileNameAndPath, outputFileNameAndPath, key):
-    srtContent = open(sourceFileNameAndPath, "r", encoding="utf-8").read()
-    subGenerator = srt.parse(srtContent)
-    subTitleList = list(subGenerator)
-    contentList = []
-    for subTitle in subTitleList:
-        contentList.append(subTitle.content)
-
-    contentList = GPTTranslate(contentList, key, model, proxies)
-
-    for i in range(len(subTitleList)):
-        subTitleList[i].content = contentList[i]
-
-    srtContent = srt.compose(subTitleList)
-    with open(outputFileNameAndPath, "w", encoding="utf-8") as file:
-        file.write(srtContent)
-    return True
 
 
 def stringToVoice(url, string, outputFile):

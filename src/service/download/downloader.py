@@ -1,7 +1,7 @@
 import os
 from abc import ABC, abstractmethod
 
-YOUTUBE_DOWNLOAD_PATH = "../../data/input_videos/youtube"
+YOUTUBE_DOWNLOAD_PATH = "../../../data/input_videos/youtube"
 
 
 class Downloader(ABC):

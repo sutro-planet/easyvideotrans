@@ -47,7 +47,7 @@ def adjust_subtitle_timing(subs, path, notSilenceThreshold):
         sub.start = datetime.timedelta(seconds=newStartTime)
 
 
-def transcribeAudioEn(logger, path, modelName="base.en", language="en", srtFilePathAndName="VIDEO_FILENAME.srt"):
+def transcribe_audio_en(logger, path, modelName="base.en", language="en", srtFilePathAndName="VIDEO_FILENAME.srt"):
     # 非静音检测阈值，单位为分贝，越小越严格
     NOT_SILENCE_THRESHOLD_DB = -30
 
@@ -112,7 +112,7 @@ def transcribeAudioEn(logger, path, modelName="base.en", language="en", srtFileP
     return True
 
 
-def transcribeAudioZh(logger, path, modelName="base.en", language="en", srtFilePathAndName="VIDEO_FILENAME.srt"):
+def transcribe_audio_zh(logger, path, modelName="base.en", language="en", srtFilePathAndName="VIDEO_FILENAME.srt"):
     END_INTERPUNCTION = ["。", "！", "？", "…", "；", "，", "、", ",", ".", "!", "?", ";"]
     ENGLISH_AND_NUMBER_CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
@@ -129,19 +129,19 @@ def transcribeAudioZh(logger, path, modelName="base.en", language="en", srtFileP
             if subtitle is None:
                 subtitle = srt.Subtitle(index, datetime.timedelta(seconds=word.start),
                                         datetime.timedelta(seconds=word.end), "")
-            finalWord = word.word.strip()
+            final_word = word.word.strip()
             subtitle.end = datetime.timedelta(seconds=word.end)
 
             # 排除英文字母+. 情况
-            if (finalWord[-1] in END_INTERPUNCTION and not (finalWord[-1] == "." and len(finalWord) > 1 and finalWord[
+            if (final_word[-1] in END_INTERPUNCTION and not (final_word[-1] == "." and len(final_word) > 1 and final_word[
                 -2] in ENGLISH_AND_NUMBER_CHARACTERS)) or (len(subtitle.content) > 20):
-                subtitle.content += finalWord[:-1] if finalWord[-1] == "." and finalWord[
-                    -2] in ENGLISH_AND_NUMBER_CHARACTERS else finalWord
+                subtitle.content += final_word[:-1] if final_word[-1] == "." and final_word[
+                    -2] in ENGLISH_AND_NUMBER_CHARACTERS else final_word
                 subs.append(subtitle)
                 index += 1
                 subtitle = None
             else:
-                subtitle.content += finalWord
+                subtitle.content += final_word
 
     if subtitle is not None:
         subs.append(subtitle)
