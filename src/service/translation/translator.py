@@ -22,4 +22,3 @@ class Translator(ABC):
             file.write(srt_content)
 
         return True
-
