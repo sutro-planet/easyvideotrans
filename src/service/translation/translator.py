@@ -29,7 +29,7 @@ class Translator(ABC):
 
 def get_translator(translate_vendor, api_key=None, proxies=None):
     if translate_vendor == "google":
-        return GoogleTranslator(proxy="")
+        return GoogleTranslator(proxy=proxies)
     elif translate_vendor == "deepl":
         if not api_key:
             raise ValueError("Missing translate key for DeepL.")
