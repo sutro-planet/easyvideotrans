@@ -10,7 +10,7 @@ import zipfile
 import shutil
 import uuid
 
-from tools_tbd.audio_remove import audio_remove
+from src.service.audio_processing.audio_remove import audio_remove
 from src.task_manager.celery_tasks.tasks import video_preview_task
 from src.task_manager.celery_tasks.celery_utils import get_queue_length
 from work_space_tbd import transcribeAudioEn, srtSentanceMerge, srtFileGoogleTran, srtFileDeeplTran, srtFileGPTTran, \
