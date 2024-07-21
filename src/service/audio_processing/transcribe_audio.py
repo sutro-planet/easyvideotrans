@@ -134,8 +134,7 @@ def transcribe_audio_zh(logger, path, modelName="base.en", language="en", srtFil
 
             # 排除英文字母+. 情况
             if ((final_word[-1] in END_INTERPUNCTION and not (
-                    final_word[-1] == "." and len(final_word) > 1 and final_word[-2] in ENGLISH_AND_NUMBER_CHARACTERS))
-                    or (len(subtitle.content) > 20)):
+                    final_word[-1] == "." and len(final_word) > 1 and final_word[-2] in ENGLISH_AND_NUMBER_CHARACTERS)) or (len(subtitle.content) > 20)):
                 subtitle.content += final_word[:-1] if final_word[-1] == "." and final_word[-2] in ENGLISH_AND_NUMBER_CHARACTERS else final_word
                 subs.append(subtitle)
                 index += 1

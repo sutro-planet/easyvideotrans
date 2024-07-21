@@ -2,6 +2,7 @@ import os
 import srt
 import datetime
 from pydub import AudioSegment
+from src.utils.log_util import WarningFile
 
 
 def connect_voice(logger, sourceDir, outputAndPath, warningFilePath):
@@ -29,6 +30,7 @@ def connect_voice(logger, sourceDir, outputAndPath, warningFilePath):
     finalAudioEnd += AudioSegment.from_wav(finalAudioFileAndPath).duration_seconds * 1000
     duration = max(duration, finalAudioEnd)
 
+    diagnosisLog = WarningFile(warningFilePath)
     # 初始化一个空的音频段
     combined = AudioSegment.silent(duration=duration)
     for i in range(len(voiceMapSrt)):
@@ -48,12 +50,13 @@ def connect_voice(logger, sourceDir, outputAndPath, warningFilePath):
                 if speedUp > MAX_SPEED_UP:
                     # 转换为 HH:MM:SS 格式
                     logStr = f"Warning: The audio {i + 1} , at {timeStr} , is too short, speed up is {speedUp}."
-                    # diagnosisLog.write(logStr)
+                    diagnosisLog.write(logStr)
 
                 # 音频如果提速一个略大于1，则speedup函数可能会出现一个错误的音频，所以这里确定最小的speedup为1.01
                 if speedUp < MIN_SPEED_UP:
-                    # logStr = f"Warning: The audio {i + 1} , at {timeStr} , speed up {speedUp} is too near to 1.0. Set to {MIN_SPEED_UP} forcibly."
-                    # diagnosisLog.write(logStr)
+                    logStr = (f"Warning: The audio {i + 1} , at {timeStr} , speed up {speedUp} is too near to 1.0."
+                              f" Set to {MIN_SPEED_UP} forcibly.")
+                    diagnosisLog.write(logStr)
                     speedUp = MIN_SPEED_UP
                 audio = audio.speedup(playback_speed=speedUp)
 
