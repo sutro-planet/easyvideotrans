@@ -1,5 +1,5 @@
+from src.service.video_synthesis.video_preview import zhVideoPreview
 from src.task_manager.celery_tasks import celery_app
-from work_space_tbd import zhVideoPreview
 
 
 @celery_app.task(bind=True)
