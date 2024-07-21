@@ -1,4 +1,4 @@
-from src.service.translation.translator import Translator
+from .translator import Translator
 from pygtrans import Translate
 
 

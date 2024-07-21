@@ -3,7 +3,7 @@ import json
 import concurrent.futures
 import time
 import tenacity
-from src.service.translation.translator import Translator
+from .translator import Translator
 
 DEFAULT_URL = "https://api.openai.com/v1/"
 GHATGPT_TERMS_FILE = "../../../configs/gpt_terms.json"

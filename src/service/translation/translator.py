@@ -1,8 +1,5 @@
 from abc import ABC, abstractmethod
 import srt
-from src.service.translation.deepl_translator import DeepLTranslator
-from src.service.translation.google_translator import GoogleTranslator
-from src.service.translation.gpt_translator import GPTTranslator
 
 
 class Translator(ABC):
@@ -26,17 +23,3 @@ class Translator(ABC):
 
         return True
 
-
-def get_translator(translate_vendor, api_key=None, proxies=None):
-    if translate_vendor == "google":
-        return GoogleTranslator(proxy=proxies)
-    elif translate_vendor == "deepl":
-        if not api_key:
-            raise ValueError("Missing translate key for DeepL.")
-        return DeepLTranslator(key=api_key)
-    elif "gpt" in translate_vendor:
-        if not api_key:
-            raise ValueError("Missing translate key for GPT.")
-        return GPTTranslator(api_key=api_key, model_name=translate_vendor, proxies=proxies)
-    else:
-        raise ValueError("Unknown translation vendor.")

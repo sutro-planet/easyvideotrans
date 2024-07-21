@@ -7,9 +7,8 @@ import uuid
 from src.service.audio_processing.audio_remove import audio_remove
 from src.service.audio_processing.transcribe_audio import transcribe_audio_en
 from src.service.audio_processing.voice_connect import connect_voice
-from src.service.translation.srt import srt_sentense_merge
-from src.service.translation.translator import get_translator
-from src.service.tts.tts_client import get_tts_client
+from src.service.translation import get_translator, srt_sentense_merge
+from src.service.tts import get_tts_client
 from src.task_manager.celery_tasks.tasks import video_preview_task
 from src.task_manager.celery_tasks.celery_utils import get_queue_length
 from werkzeug.utils import secure_filename

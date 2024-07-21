@@ -1,5 +1,5 @@
 import deepl
-from src.service.translation.translator import Translator
+from .translator import Translator
 
 
 class DeepLTranslator(Translator):
