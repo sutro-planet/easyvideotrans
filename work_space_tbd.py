@@ -455,7 +455,8 @@
 #     #             sourceVideoNameAndPath = voiceFhdFileNameAndPath
 #     #         elif os.path.exists(viedoFileNameAndPath):
 #     #             print(
-#     #                 f"Cannot find high-definition video, use low-definition video {viedoFileNameAndPath} for preview video {previewVideoNameAndPath}")
+#     #                 f"Cannot find high-definition video, use low-definition video {viedoFileNameAndPath}
+#     for preview video {previewVideoNameAndPath}")
 #     #             sourceVideoNameAndPath = viedoFileNameAndPath
 #     #         else:
 #     #             logStr = f"[WORK x] Error: Cannot find source video for preview video {previewVideoNameAndPath}."

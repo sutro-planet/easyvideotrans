@@ -42,8 +42,7 @@ def connect_voice(logger, sourceDir, outputAndPath, warningFilePath):
             audioEndPosition = audioPosition + audio.duration_seconds * 1000 + MIN_GAP_DURATION * 1000
             audioNextPosition = voiceMapSrt[i + 1].start.total_seconds() * 1000
             if audioNextPosition < audioEndPosition:
-                speedUp = (audio.duration_seconds * 1000 + MIN_GAP_DURATION * 1000) / (
-                        audioNextPosition - audioPosition)
+                speedUp = (audio.duration_seconds * 1000 + MIN_GAP_DURATION * 1000) / (audioNextPosition - audioPosition)
                 seconds = audioPosition / 1000.0
                 timeStr = str(datetime.timedelta(seconds=seconds))
                 if speedUp > MAX_SPEED_UP:
@@ -53,7 +52,7 @@ def connect_voice(logger, sourceDir, outputAndPath, warningFilePath):
 
                 # 音频如果提速一个略大于1，则speedup函数可能会出现一个错误的音频，所以这里确定最小的speedup为1.01
                 if speedUp < MIN_SPEED_UP:
-                    logStr = f"Warning: The audio {i + 1} , at {timeStr} , speed up {speedUp} is too near to 1.0. Set to {MIN_SPEED_UP} forcibly."
+                    # logStr = f"Warning: The audio {i + 1} , at {timeStr} , speed up {speedUp} is too near to 1.0. Set to {MIN_SPEED_UP} forcibly."
                     # diagnosisLog.write(logStr)
                     speedUp = MIN_SPEED_UP
                 audio = audio.speedup(playback_speed=speedUp)
