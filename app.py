@@ -12,7 +12,7 @@ from src.service.tts import get_tts_client
 from src.task_manager.celery_tasks.tasks import video_preview_task
 from src.task_manager.celery_tasks.celery_utils import get_queue_length
 from werkzeug.utils import secure_filename
-from pytube import YouTube
+from pytubefix import YouTube
 from moviepy.editor import VideoFileClip
 from functools import wraps
 from flask import Flask, request, jsonify, render_template, send_from_directory
