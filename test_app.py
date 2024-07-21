@@ -1,7 +1,7 @@
 import os
 import unittest
 import tempfile
-
+import hashlib
 from app import app
 from app import url_rule_to_base
 
@@ -47,6 +47,19 @@ class PytvzhenAPITest(unittest.TestCase):
         response = self.app.post("/yt_download", json={'video_id': 'SrvXsYxbgC4'})
         assert response.status_code != 500, "Pytube fix not applied, see https://github.com/pytube/pytube/pull/1312"
         assert response.status_code == 200
+
+    def test_download_yt_thumbnail(self):
+        response = self.app.post("/yt_thumbnail", json={'video_id': 'SrvXsYxbgC4'})
+        expected_fn = os.path.join(self.test_dir, 'SrvXsYxbgC4_thumbnail.png')
+
+        assert response.status_code == 200
+        assert os.path.isfile(expected_fn), "thumbnail not downloaded and cached on server side"
+
+        returned_sha = hashlib.sha256(response.data).hexdigest()
+
+        with open(expected_fn, 'rb', buffering=0) as f:
+            expected_sha = hashlib.sha256(f.read()).hexdigest()
+            assert returned_sha == expected_sha, f"thumbnail doesn't match, expected {expected_sha} actual {returned_sha}"
 
     def tearDown(self):
         for root, dirs, files in os.walk(self.test_dir, topdown=False):

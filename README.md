@@ -14,10 +14,19 @@
 
 [Changelog](./doc/change_log.md) <br>
 ![Linux Verfied](https://img.shields.io/badge/Linux-Verfied-brightgreen)
+[![q群1](https://img.shields.io/badge/企鹅群-536918174-1EBAFC?style=flat&logo=tencentqq)](https://qm.qq.com/q/pJMgV3liiO)
+
+
+
+</div>
+
+主要开发者
 [![Bilibili](https://img.shields.io/badge/Bilibili-蓝色硫酸铜-FF69B4?style=flat&logo=bilibili)](https://space.bilibili.com/278134)
 [![x zornlink](https://img.shields.io/twitter/url/https/twitter.com/cloudposse.svg?style=social&label=Follow%20%40Zornlink)](https://x.com/zornlink)
-[![q群1](https://img.shields.io/badge/企鹅群-536918174-1EBAFC?style=flat&logo=tencentqq)](https://qm.qq.com/q/pJMgV3liiO)
-</div>
+[![Bilibili](https://img.shields.io/badge/Bilibili-kkitety-FF69B4?style=flat&logo=bilibili)](https://space.bilibili.com/79912416)
+[![Bilibili](https://img.shields.io/badge/Bilibili-弯曲的一条虫-FF69B4?style=flat&logo=bilibili)](https://space.bilibili.com/1557732)
+[![Bilibili](https://img.shields.io/badge/Bilibili-zzjw河狸吗-FF69B4?style=flat&logo=bilibili)](https://space.bilibili.com/112484910)
+
 
 </div>
 
@@ -43,6 +52,7 @@
 - [简介](#简介)
 - [目录](#目录)
 - [相关项目介绍](#相关项目介绍)
+- [在线版本](#在线版本)
 - [部署](#部署)
   - [Docker部署（推荐）](#docker部署推荐)
   - [本地部署](#本地部署)
@@ -53,8 +63,14 @@
 - [主要上游开源项目](#主要上游开源项目)
 
 # 相关项目介绍
-[easyvideotrans-frontend](https://github.com/sutro-planet/easyvideotrans-frontend)正式web前端  
-[pytvzhen](https://github.com/CuSO4Gem/pytvzhen)离线客户端
+* [easyvideotrans-frontend](https://github.com/sutro-planet/easyvideotrans-frontend)正式web前端  
+* [pytvzhen](https://github.com/CuSO4Gem/pytvzhen)离线客户端
+
+* [https://easyvideotrans.com/](https://easyvideotrans.com/)在线版本
+
+我们部署了一个[在线版本](https://easyvideotrans.com/)，可以翻译长达20分钟油管或着任意自定义长度的视频，欢迎随时使用。你可以通过访问 
+[Grafana 图表](https://grafana.sutroplanet.com/d/ee5da809-66e2-4498-9c9c-78a8ebf476a5/easyvideotrans)
+ 来了解该在线版本的健康情况。
 
 # 部署
 
