@@ -1,31 +1,28 @@
 import os
 import json
-
+import zipfile
+import shutil
+import uuid
+from src.service.audio_processing.audio_remove import audio_remove
+from src.service.audio_processing.transcribe_audio import transcribe_audio_en
+from src.service.audio_processing.voice_connect import connect_voice
+from src.service.translation.srt import srt_sentense_merge
+from src.service.translation.translator import get_translator
+from src.service.tts.tts_client import get_tts_client
+from src.task_manager.celery_tasks.tasks import video_preview_task
+from src.task_manager.celery_tasks.celery_utils import get_queue_length
+from werkzeug.utils import secure_filename
 from pytube import YouTube
 from moviepy.editor import VideoFileClip
 from functools import wraps
 from flask import Flask, request, jsonify, render_template, send_from_directory
 from prometheus_flask_exporter import PrometheusMetrics
-import zipfile
-import shutil
-import uuid
-
-from src.service.audio_processing.audio_remove import audio_remove
-from src.task_manager.celery_tasks.tasks import video_preview_task
-from src.task_manager.celery_tasks.celery_utils import get_queue_length
-from work_space_tbd import transcribeAudioEn, srtSentanceMerge, srtFileGoogleTran, srtFileDeeplTran, srtFileGPTTran, \
-    voiceConnect, srtToVoiceEdge
-
-from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.config.from_file("./configs/pytvzhen.json", load=json.load)
-
 metrics = PrometheusMetrics(app)
 metrics.info('pytvzhen_web', 'Pytvzhen backend API', version='1.0.0')
-
 PYTVZHEN_STAGE = 'PYTVZHEN_STAGE'
-
 pytvzhen_api_request_counter = metrics.counter(
     'pytvzhen_api_request_counter', 'Request count by request paths',
     labels={'base_url': lambda: url_rule_to_base(request.url_rule), 'stage': lambda: pytvzhen_stage(),
@@ -326,9 +323,9 @@ def transcribe(video_id):
             f'not found at {audio_no_bg_path}, please extract it first')}), 404
 
     try:
-        transcribeAudioEn(app.logger, path=audio_no_bg_path, modelName=transcribe_model, language="en",
-                          srtFilePathAndName=en_srt_path)
-        srtSentanceMerge(app.logger, en_srt_path, en_srt_merged_path)
+        transcribe_audio_en(app.logger, path=audio_no_bg_path, modelName=transcribe_model, language="en",
+                            srtFilePathAndName=en_srt_path)
+        srt_sentense_merge(app.logger, en_srt_path, en_srt_merged_path)
 
         return jsonify({"message": log_info_return_str(
             f"Transcribed SRT from {audio_no_bg_fn} as {en_srt_fn} and {en_srt_merged_fn} successfully."),
@@ -360,15 +357,14 @@ def srt_en_serve(video_id):
 @require_video_id_from_post_request
 def transhlate_to_zh(video_id):
     output_path = app.config['OUTPUT_PATH']
-
-    data = request.get_json()
-    video_id = data['video_id']
-    translateVendor = data['translate_vendor']
-    api_key = data['translate_key']
     en_srt_merged_fn = f'{video_id}_en_merged.srt'
     zh_srt_merged_fn = f'{video_id}_zh_merged.srt'
     en_srt_merged_path = os.path.join(output_path, en_srt_merged_fn)
     zh_srt_merged_path = os.path.join(output_path, zh_srt_merged_fn)
+    data = request.get_json()
+    video_id = data['video_id']
+    translateVendor = data['translate_vendor']
+    api_key = data['translate_key']
 
     if not os.path.exists(en_srt_merged_path):
         return jsonify({"message": log_warning_return_str(
@@ -379,49 +375,17 @@ def transhlate_to_zh(video_id):
         return jsonify({"message": log_warning_return_str("Unsupported translate vendor.")}), 404
 
     try:
-        if translateVendor == "google":
-            ret = srtFileGoogleTran(logger=app.logger, sourceFileNameAndPath=en_srt_merged_path,
-                                    outputFileNameAndPath=zh_srt_merged_path)
-            if ret:
-                return jsonify({"message": log_info_return_str(
-                    f"using google translate to translate SRT from {en_srt_merged_fn} to {zh_srt_merged_fn} successfully."),
-                    "video_id": video_id}), 200
-            else:
-                return jsonify({"message": log_warning_return_str("Google translate failed.")}), 404
-
-        elif translateVendor == "deepl":
-            if api_key == "":
-                return jsonify({"message": log_warning_return_str("Missing translate key.")}), 404
-            else:
-                ret = srtFileDeeplTran(logger=app.logger, sourceFileNameAndPath=en_srt_merged_path,
-                                       outputFileNameAndPath=zh_srt_merged_path, key=api_key)
-                if ret:
-                    return jsonify({"message": log_info_return_str(
-                        f"using deepl translate to translate SRT from {en_srt_merged_fn} to {zh_srt_merged_fn} successfully."),
-                        "video_id": video_id}), 200
-                else:
-                    return jsonify({"message": log_warning_return_str("Deepl translate failed.")}), 404
-
-        elif "gpt" in translateVendor:
-            if api_key == "":
-                return jsonify({"message": log_warning_return_str("Missing translate key.")}), 404
-            else:
-                ret = srtFileGPTTran(logger=app.logger, model=translateVendor, proxies=None,
-                                     sourceFileNameAndPath=en_srt_merged_path, outputFileNameAndPath=zh_srt_merged_path,
-                                     key=api_key)
-                if ret:
-                    return jsonify({"message": log_info_return_str(
-                        f"using {translateVendor} translate to translate SRT from {en_srt_merged_fn} to {zh_srt_merged_fn} successfully."),
-                        "video_id": video_id}), 200
-                else:
-                    return jsonify({"message": log_warning_return_str("GPT translate failed.")}), 404
-
-    except Exception as e:
-        exception = e
-        return jsonify({"message": log_error_return_str(
-            f'An error occurred while translating SRT from {en_srt_merged_fn} to {zh_srt_merged_fn}: {exception}')}), 500
-
-    return jsonify({"message": log_error_return_str("Translate failed.")}), 500
+        translator = get_translator(translateVendor, api_key, proxies=None)
+        ret = translator.translate_srt(source_file_name_and_path=en_srt_merged_path,
+                                       output_file_name_and_path=zh_srt_merged_path)
+        if ret:
+            return jsonify({"message": log_info_return_str(
+                f"using {translateVendor} translate to translate SRT from {en_srt_merged_fn} to {zh_srt_merged_fn} successfully."),
+                "video_id": video_id}), 200
+        else:
+            return jsonify({"message": log_warning_return_str(f"{translateVendor} translate failed.")}), 404
+    except ValueError as e:
+        return jsonify({"message": log_warning_return_str(str(e))}), 404
 
 
 @app.route('/srt_en_merged/<video_id>', methods=['GET'])
@@ -493,7 +457,7 @@ def voice_connect(video_id):
         return jsonify({"message": log_warning_return_str(
             f'Voice directory {voiceDir} not found at {output_path}')}), 404
 
-    ret = voiceConnect(app.logger, voiceDir, voice_connect_path, warning_log_path)
+    ret = connect_voice(app.logger, voiceDir, voice_connect_path, warning_log_path)
     if ret:
         return jsonify({"message": log_info_return_str(
             f"Voice connect {voice_connect_fn} successfully."),
@@ -554,7 +518,8 @@ def tts(video_id):
         shutil.rmtree(tts_dir)
 
     try:
-        ret = srtToVoiceEdge(app.logger, srt_path, tts_dir, charater)
+        tts_client = get_tts_client(charater)
+        ret = tts_client.srt_to_voice(srt_path, tts_dir)
         if ret:
             return jsonify({"message": log_info_return_str(
                 "tts success."),

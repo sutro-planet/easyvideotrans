@@ -4,7 +4,7 @@ import datetime
 from pydub import AudioSegment
 
 
-def voice_connect(logger, sourceDir, outputAndPath, warningFilePath):
+def connect_voice(logger, sourceDir, outputAndPath, warningFilePath):
     MAX_SPEED_UP = 1.2  # 最大音频加速
     MIN_SPEED_UP = 1.05  # 最小音频加速
     MIN_GAP_DURATION = 0.1  # 最小间隔时间，单位秒。低于这个间隔时间就认为音频重叠了
