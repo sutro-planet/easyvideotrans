@@ -15,6 +15,6 @@ def load_tasks_route():
     return config
 
 
-celery_app = Celery(__name__, include=["celery_tasks.tasks"])
+celery_app = Celery(__name__, include=["src.task_manager.celery_tasks.tasks"])
 celery_app.conf.update(load_celery_config())
 celery_app.conf.task_routes = load_tasks_route()

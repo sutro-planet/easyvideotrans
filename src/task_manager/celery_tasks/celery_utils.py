@@ -1,6 +1,6 @@
 import pika
 
-from celery_tasks import load_celery_config
+from src.task_manager.celery_tasks import load_celery_config
 
 
 def get_queue_length(queue_name):

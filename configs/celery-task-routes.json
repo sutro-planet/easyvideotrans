@@ -1,5 +1,5 @@
 {
-  "celery_tasks.tasks.video_preview_task": {
+  "src.task_manager.celery_tasks.tasks.video_preview_task": {
     "queue": "video_preview"
   }
 }
