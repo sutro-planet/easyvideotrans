@@ -1,0 +1,3 @@
+output/*
+celery_results/*
+.DS_Store

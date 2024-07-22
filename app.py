@@ -18,7 +18,7 @@ from functools import wraps
 from flask import Flask, request, jsonify, render_template, send_from_directory
 from prometheus_flask_exporter import PrometheusMetrics
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="./appendix/templates", static_folder="./appendix/static")
 app.config.from_file("./configs/pytvzhen.json", load=json.load)
 metrics = PrometheusMetrics(app)
 metrics.info('pytvzhen_web', 'Pytvzhen backend API', version='1.0.0')
@@ -535,7 +535,7 @@ def tts(video_id):
     srt_fn = f'{video_id}_zh_merged.srt'
     srt_path = os.path.join(output_path, srt_fn)
     tts_dir = os.path.join(output_path, video_id + "_zh_source")
-    charater = data['tts_character']
+    character = data['tts_character']
 
     if not os.path.exists(srt_path):
         return jsonify({"message": log_warning_return_str(
@@ -546,18 +546,15 @@ def tts(video_id):
         shutil.rmtree(tts_dir)
 
     try:
-        tts_client = get_tts_client(charater)
-        ret = tts_client.srt_to_voice(srt_path, tts_dir)
-        if ret:
-            return jsonify({"message": log_info_return_str(
-                "tts success."),
-                "video_id": video_id}), 200
-        else:
-            return jsonify({"message": log_warning_return_str("tts failed.")}), 404
+        tts_client = get_tts_client("edge", character)
+        tts_client.srt_to_voice(srt_path, tts_dir)
+        return jsonify({"message": log_info_return_str(
+            "tts success."),
+            "video_id": video_id}), 200
     except Exception as e:
-        print(e)
+        exception = e
 
-    return jsonify({"message": log_warning_return_str("tts failed.")}), 404
+    return jsonify({"message": log_warning_return_str(f"tts failed: {exception}")}), 500
 
 
 @app.route('/tts/<video_id>', methods=['GET'])
@@ -568,7 +565,6 @@ def tts_serve(video_id):
     tts_dir = os.path.join(output_path, video_id + "_zh_source")
     tts_zip_fn = video_id + "_zh_source.zip"
     tts_zip_path = os.path.join(output_path, tts_zip_fn)
-    print("tts_dir", tts_dir)
     if not os.path.exists(tts_dir):
         return jsonify({"message": log_warning_return_str(
             f'Voice directory {tts_dir} not found at {output_path}')}), 404
@@ -578,11 +574,9 @@ def tts_serve(video_id):
         for file in files:
             file_path = os.path.join(root, file)
             relative_path = os.path.relpath(file_path, output_path)
-            print(file_path + "," + relative_path)
             zipf.write(file_path, relative_path)
 
     zipf.close()
-    print("tts_zip_path", tts_zip_path)
     return send_from_directory(output_path, tts_zip_fn, as_attachment=True)
 
 

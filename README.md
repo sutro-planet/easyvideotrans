@@ -117,7 +117,7 @@ faster-whisper_models
 
 1. 在一个 terminal 里面启动 Celery 队列和 worker 来处理视频渲染请求。
 
-`celery -A celery_tasks.celery_app worker --concurrency 1 -Q video_preview`
+`celery -A src.task_manager.celery_tasks.celery_app worker --concurrency 1 -Q video_preview`
 
 2. 在另一个 terminal 里运行flask app。
 ```
