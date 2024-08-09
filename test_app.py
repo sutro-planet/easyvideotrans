@@ -1,9 +1,12 @@
+import asyncio
 import os
 import unittest
 import tempfile
 import hashlib
 from app import app
 from app import url_rule_to_base
+
+from src.service.tts.edge_tts import EdgeTTSClient
 
 
 class PytvzhenUnitTest(unittest.TestCase):
@@ -24,6 +27,23 @@ class PytvzhenUnitTest(unittest.TestCase):
 
     def test_video_url_rule_to_base_succeeds_with_prefix(self):
         assert url_rule_to_base("/api/video_preview/<video_id>") == "/api/video_preview"
+
+    async def success_coroutine(self, delay):
+        await asyncio.sleep(delay)
+        return f"coroutine completed after {delay} seconds"
+
+    async def exception_coroutine(self, delay):
+        await asyncio.sleep(delay)
+        raise Exception(f"coroutine throws exception after {delay} seconds")
+
+    def test_edge_tts_run_convert_srt_to_voice_edge_coroutines(self):
+        coroutines = [self.success_coroutine(1), self.success_coroutine(2)]
+        assert EdgeTTSClient._run_convert_srt_to_voice_edge_coroutines(coroutines) == 0
+
+    def test_edge_tts_run_convert_srt_to_voice_edge_coroutines_cancel_pending_tasks_on_exception(self):
+        coroutines = [self.success_coroutine(1), self.success_coroutine(2), self.exception_coroutine(3),
+                      self.success_coroutine(4), self.success_coroutine(5)]
+        assert EdgeTTSClient._run_convert_srt_to_voice_edge_coroutines(coroutines) == 2
 
 
 class PytvzhenAPITest(unittest.TestCase):

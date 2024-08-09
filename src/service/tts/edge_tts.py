@@ -16,6 +16,25 @@ class EdgeTTSClient(TTSClient):
         communicate = edge_tts.Communicate(text, self.character)
         await communicate.save(path)
 
+    @staticmethod
+    def _run_convert_srt_to_voice_edge_coroutines(coroutines):
+        asyncio.set_event_loop(asyncio.SelectorEventLoop())
+        loop = asyncio.get_event_loop()
+        try:
+            loop.run_until_complete(asyncio.gather(*coroutines))
+            print("convert srt to mp3 voice using edge successfully")
+        except Exception as e:
+            print(f"convert srt to mp3 voice using edge exception: {e}")
+        finally:
+            pending = asyncio.all_tasks(loop)
+            for task in pending:
+                task.cancel()
+            print(f"convert srt to mp3 voice using edge cancel remaining pending tasks: {len(pending)}")
+            loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+            loop.close()
+
+            return len(pending)
+
     @tenacity.retry(wait=tenacity.wait_exponential(multiplier=1, min=4, max=10),
                     stop=tenacity.stop_after_attempt(5),
                     reraise=True)
@@ -40,10 +59,8 @@ class EdgeTTSClient(TTSClient):
             file_names.append(file_name)
             coroutines.append(self._convert_srt_to_voice_edge(sub_title.content, output_mp3_path))
 
-        asyncio.set_event_loop(asyncio.SelectorEventLoop())
-        asyncio.get_event_loop().run_until_complete(asyncio.gather(*coroutines))
+        EdgeTTSClient._run_convert_srt_to_voice_edge_coroutines(coroutines)
 
-        print("\nConvert srt to mp3 voice successfully!!!")
         for mp3_file_name, wav_file_name in zip(file_mp3_names, file_names):
             mp3_path = os.path.join(output_dir, mp3_file_name)
             wav_path = os.path.join(output_dir, wav_file_name)
