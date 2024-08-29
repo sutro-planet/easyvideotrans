@@ -68,7 +68,7 @@
 
 * [https://easyvideotrans.com/](https://easyvideotrans.com/)在线版本
 
-我们部署了一个[在线版本](https://easyvideotrans.com/)，可以翻译长达20分钟油管或着任意自定义长度的视频，欢迎随时使用。你可以通过访问 
+我们部署了一个[在线版本](https://easyvideotrans.com/)，可以翻译长达60分钟油管或着任意自定义长度的视频，欢迎随时使用。你可以通过访问 
 [Grafana 图表](https://grafana.sutroplanet.com/d/ee5da809-66e2-4498-9c9c-78a8ebf476a5/easyvideotrans)
  来了解该在线版本的健康情况。
 

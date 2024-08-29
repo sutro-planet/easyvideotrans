@@ -194,7 +194,7 @@ def yt_download(video_id):
         exception = e
 
     return jsonify({"message": log_error_return_str(
-        f'An error occurred while downloading video  {video_id} to {video_save_path}: {exception}')}), 500
+        f'An error occurred while downloading video {video_id} to {video_save_path}: {exception}')}), 500
 
 
 @app.route('/yt/<video_id>', methods=['GET'])
