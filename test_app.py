@@ -62,6 +62,16 @@ class PytvzhenAPITest(unittest.TestCase):
         assert response.status_code == 200
         assert os.path.isfile(os.path.join(self.test_dir, 'VwhT-P3pLJs.mp4'))
 
+    def test_download_yt_video_too_long(self):
+        # video zv-TS_mEHE4 has length 1:13:17
+        response = self.app.post("/yt_download", json={'video_id': "zv-TS_mEHE4"})
+        assert response.status_code == 400, "should not be able to download long video"
+        assert "Video duration is too long." in response.get_json()["message"]
+
+    def test_download_yt_video_invalid_id(self):
+        response = self.app.post("/yt_download", json={'video_id': "video-90097"})
+        assert response.status_code == 500, "An error occurred while downloading video"
+
     def test_download_yt_video_pytube_issue(self):
         # https://stackoverflow.com/questions/71883661/pytube-error-get-throttling-function-name-could-not-find-match-for-multiple
         response = self.app.post("/yt_download", json={'video_id': 'SrvXsYxbgC4'})
