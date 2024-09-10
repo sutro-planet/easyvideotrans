@@ -3,5 +3,8 @@
   "broker_url": "pyamqp://guest@localhost:5672//",
   "result_backend": "file:///app/celery_results",
   "worker_prefetch_multiplier": 1,
-  "task_acks_late": true
+  "task_acks_late": true,
+  "task_time_limit": 7200,
+  "task_soft_time_limit": 3600,
+  "metrics_server_port": 8081
 }
