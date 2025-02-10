@@ -1,0 +1,6 @@
+{
+  "OUTPUT_PATH": "./output",
+  "VIDEO_MAX_DURATION": 3610,
+  "VOICE_BACKGROUND_SEPARATION_ENDPOINT": "http://localhost:8199/audio-sep",
+  "AUDIO_TRANSCRIBE_ENDPOINT": "http://localhost:8199/audio-transcribe"
+}

@@ -1,0 +1,30 @@
+FROM pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime AS base
+
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# Disable interactive debian
+ENV TZ=America/New_York \
+    DEBIAN_FRONTEND=noninteractive
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+
+COPY workloads/requirements.txt /app/
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY workloads /app/workloads/
+COPY src /app/src/
+COPY inference.py /app
+
+ENV LD_LIBRARY_PATH /opt/conda/lib/python3.11/site-packages/nvidia/cudnn/lib
+
+EXPOSE 8188
+
+CMD ["python", "inference.py"]

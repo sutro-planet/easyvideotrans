@@ -27,3 +27,5 @@ output/
 !celery_results/*
 
 .DS_Store
+
+.pytest_cache
