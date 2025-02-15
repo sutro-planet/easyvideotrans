@@ -1,4 +1,4 @@
-name: EasyVideoTrans Service Docker Image Release
+name: EasyVideoTrans Workloads Docker Image Release
 
 on:
   workflow_run:
@@ -29,4 +29,4 @@ jobs:
       with:
         context: .
         push: true
-        tags: hanfa/easyvideotrans:latest
+        tags: hanfa/easyvideotrans-workloads:latest

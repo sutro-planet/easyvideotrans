@@ -2,7 +2,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-from models.audio_removal_model import layers
+from workloads.lib import layers
 
 
 class BaseNet(nn.Module):

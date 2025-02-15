@@ -1,5 +1,8 @@
 # Use an official NVIDIA runtime with CUDA and Miniconda as a parent image
-FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime AS base
+FROM python:3.9-slim AS base
+
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
 
 # Disable interactive debian
 ENV TZ=America/New_York \
@@ -15,7 +18,7 @@ COPY requirements.txt .
 
 # Install dependencies
 RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+RUN pip install --default-timeout=200 -r requirements.txt
 
 
 FROM base AS final
@@ -27,11 +30,11 @@ COPY . /app
 COPY configs/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Set environment variables to configure Celery
-ENV CELERY_BROKER_DOMAIN=localhost
-ENV CELERY_BROKER_URL=pyamqp://guest@localhost:5672//
-ENV CELERY_RESULT_BACKEND=file:///app/celery_results
-ENV CELERY_WORKER_PREFETCH_MULTIPLIER=1
-ENV CELERY_TASK_ACKS_LATE=true
+ENV CELERY_BROKER_DOMAIN localhost
+ENV CELERY_BROKER_URL pyamqp://guest@localhost:5672//
+ENV CELERY_RESULT_BACKEND file:///app/celery_results
+ENV CELERY_WORKER_PREFETCH_MULTIPLIER 1
+ENV CELERY_TASK_ACKS_LATE true
 
 # Make port 8080 available to the world outside this container
 EXPOSE 8080
@@ -42,7 +45,7 @@ ENV FLASK_APP app.py
 ENV FLASK_DEBUG 0
 
 ARG PYTVZHEN_STAGE=beta
-ENV PYTVZHEN_STAGE=${PYTVZHEN_STAGE}
+ENV PYTVZHEN_STAGE ${PYTVZHEN_STAGE}
 
 # Run supervisord to start both Flask and Celery
 CMD ["/usr/bin/supervisord"]

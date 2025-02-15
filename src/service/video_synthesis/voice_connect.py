@@ -37,15 +37,16 @@ def connect_voice(logger, sourceDir, outputAndPath, warningFilePath):
         audioFileAndPath = os.path.join(sourceDir, voiceMapSrt[i].content)
         audio = AudioSegment.from_wav(audioFileAndPath)
         audio = audio.strip_silence(silence_thresh=-40, silence_len=100)  # 去除头尾的静音
-        audioPosition = voiceMapSrt[i].start.total_seconds() * 1000
+        audio_position = voiceMapSrt[i].start.total_seconds() * 1000
 
         if i != len(voiceMapSrt) - 1:
             # 检查上这一句的结尾到下一句的开头之间是否有静音，如果没有则需要缩小音频
-            audioEndPosition = audioPosition + audio.duration_seconds * 1000 + MIN_GAP_DURATION * 1000
-            audioNextPosition = voiceMapSrt[i + 1].start.total_seconds() * 1000
-            if audioNextPosition < audioEndPosition:
-                speedUp = (audio.duration_seconds * 1000 + MIN_GAP_DURATION * 1000) / (audioNextPosition - audioPosition)
-                seconds = audioPosition / 1000.0
+            audio_end_position = audio_position + audio.duration_seconds * 1000 + MIN_GAP_DURATION * 1000
+            audio_next_position = voiceMapSrt[i + 1].start.total_seconds() * 1000
+            if audio_next_position < audio_end_position:
+                position_delta = (audio_next_position - audio_position)
+                speedUp = (audio.duration_seconds * 1000 + MIN_GAP_DURATION * 1000) / position_delta
+                seconds = audio_position / 1000.0
                 timeStr = str(datetime.timedelta(seconds=seconds))
                 if speedUp > MAX_SPEED_UP:
                     # 转换为 HH:MM:SS 格式
@@ -60,7 +61,7 @@ def connect_voice(logger, sourceDir, outputAndPath, warningFilePath):
                     speedUp = MIN_SPEED_UP
                 audio = audio.speedup(playback_speed=speedUp)
 
-        combined = combined.overlay(audio, position=audioPosition)
+        combined = combined.overlay(audio, position=audio_position)
 
     combined.export(outputAndPath, format="wav")
     return True

@@ -4,11 +4,10 @@ import requests
 import zipfile
 import shutil
 import uuid
-from src.service.audio_processing.audio_remove import audio_remove
-from src.service.audio_processing.transcribe_audio import transcribe_audio_en
-from src.service.audio_processing.voice_connect import connect_voice
-from src.service.translation import get_translator, srt_sentense_merge
+from src.service.video_synthesis.voice_connect import connect_voice
+from src.service.translation import get_translator
 from src.service.tts import get_tts_client
+from src.workload_client import EasyVideoTransWorkloadClient
 from src.task_manager.celery_tasks.tasks import video_preview_task
 from src.task_manager.celery_tasks.celery_utils import get_queue_length
 from werkzeug.utils import secure_filename
@@ -19,14 +18,21 @@ from flask import Flask, request, jsonify, render_template, send_from_directory
 from prometheus_flask_exporter import PrometheusMetrics
 
 app = Flask(__name__, template_folder="./appendix/templates", static_folder="./appendix/static")
-app.config.from_file("./configs/pytvzhen.json", load=json.load)
+app.config.from_file("./configs/easyvideotrans.json", load=json.load)
 metrics = PrometheusMetrics(app)
 metrics.info('pytvzhen_web', 'Pytvzhen backend API', version='1.0.0')
+
 PYTVZHEN_STAGE = 'PYTVZHEN_STAGE'
 pytvzhen_api_request_counter = metrics.counter(
     'pytvzhen_api_request_counter', 'Request count by request paths',
     labels={'base_url': lambda: url_rule_to_base(request.url_rule), 'stage': lambda: pytvzhen_stage(),
             'method': lambda: request.method, 'status': lambda r: r.status_code}
+)
+
+# Setup workloads client to submit any GPU workloads to EasyVideoTrans compute backend
+gpu_workload = EasyVideoTransWorkloadClient(
+    audio_separation_endpoint=app.config['VOICE_BACKGROUND_SEPARATION_ENDPOINT'],
+    audio_transcribe_endpoint=app.config['AUDIO_TRANSCRIBE_ENDPOINT'],
 )
 
 
@@ -283,9 +289,7 @@ def remove_audio_bg(video_id):
             f'not found at {output_path}, please extract it first')}), 404
 
     try:
-        baseline_path = app.config['REMOVE_BACKGROUND_MUSIC_BASELINE_MODEL_PATH']
-        audio_remove(audio_path, audio_no_bg_path, audio_bg_fn_path, baseline_path,
-                     app.config['REMOVE_BACKGROUND_MUSIC_TORCH_DEVICE'])
+        audio_bg_fn_path, audio_no_bg_fn = gpu_workload.separate_audio(audio_fn)
         return jsonify({"message": log_info_return_str(
             f"Remove remove background music for {audio_fn} as {audio_no_bg_fn} and {audio_bg_fn_path} successfully."),
             "video_id": video_id}), 200
@@ -333,7 +337,6 @@ def audio_bg_serve(video_id):
 def transcribe(video_id):
     output_path = app.config['OUTPUT_PATH']
 
-    transcribe_model = "medium"
     en_srt_fn, en_srt_merged_fn, audio_no_bg_fn = f'{video_id}_en.srt', f'{video_id}_en_merged.srt', f'{video_id}_no_bg.wav'
 
     en_srt_path, en_srt_merged_path, audio_no_bg_path = (os.path.join(output_path, en_srt_fn),
@@ -351,10 +354,7 @@ def transcribe(video_id):
             f'not found at {audio_no_bg_path}, please extract it first')}), 404
 
     try:
-        transcribe_audio_en(app.logger, path=audio_no_bg_path, modelName=transcribe_model, language="en",
-                            srtFilePathAndName=en_srt_path)
-        srt_sentense_merge(app.logger, en_srt_path, en_srt_merged_path)
-
+        gpu_workload.transcribe_audio(audio_no_bg_fn, [en_srt_fn, en_srt_merged_fn])
         return jsonify({"message": log_info_return_str(
             f"Transcribed SRT from {audio_no_bg_fn} as {en_srt_fn} and {en_srt_merged_fn} successfully."),
             "video_id": video_id}), 200

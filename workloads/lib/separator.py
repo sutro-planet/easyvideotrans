@@ -1,14 +1,9 @@
-import librosa
 import numpy as np
-import soundfile as sf
 import torch
 from tqdm import tqdm
 
-from models.audio_removal_model import nets, dataset, spec_utils
-
-AUDIO_REMOVE_DEVICE = "gpu"
-AUDIO_REMOVE_FFT_SIZE = 2048
-AUDIO_REMOVE_HOP_SIZE = 1024
+from workloads.lib import dataset
+from workloads.lib import spec_utils
 
 
 class Separator(object):
@@ -98,56 +93,3 @@ class Separator(object):
         y_spec, v_spec = self._postprocess(X_spec, mask)
 
         return y_spec, v_spec
-
-
-def audio_remove(audioFileNameAndPath, voiceFileNameAndPath, instrumentFileNameAndPath, modelNameAndPath,
-                 pytorchDevice):
-    if pytorchDevice not in ["cpu", "cuda:0"]:
-        raise ValueError("Invalid device: {}, valid choices are cpu or cuda:0. ".format(AUDIO_REMOVE_DEVICE))
-
-    device = torch.device(pytorchDevice)
-
-    print("Loading model " + pytorchDevice)
-    model = nets.CascadedNet(AUDIO_REMOVE_FFT_SIZE, AUDIO_REMOVE_HOP_SIZE, 32, 128)  # 模型参数
-    model.load_state_dict(torch.load(modelNameAndPath, map_location='cpu'))
-    model.to(device)
-    print("Model loaded")
-
-    print('loading wave source ' + audioFileNameAndPath)
-    X, sr = librosa.load(
-        audioFileNameAndPath, sr=44100, mono=False, dtype=np.float32, res_type='kaiser_fast'
-    )
-    print("Wave source loaded")
-
-    if X.ndim == 1:
-        # mono to stereo
-        X = np.asarray([X, X])
-
-    print('stft of wave source...', end=' ')
-    X_spec = spec_utils.wave_to_spectrogram(X, AUDIO_REMOVE_HOP_SIZE, AUDIO_REMOVE_FFT_SIZE)
-    print('done')
-
-    sp = Separator(
-        model=model,
-        device=device,
-        batchsize=4,
-        cropsize=256,
-        postprocess=False
-    )
-
-    y_spec, v_spec = sp.separate_tta(X_spec)
-    print('inverse stft of instruments...', end=' ')
-    wave = spec_utils.spectrogram_to_wave(y_spec, AUDIO_REMOVE_HOP_SIZE)
-    print('done')
-    sf.write(instrumentFileNameAndPath, wave.T, sr)
-
-    print('inverse stft of vocals...', end=' ')
-    wave = spec_utils.spectrogram_to_wave(v_spec, hop_length=AUDIO_REMOVE_HOP_SIZE)
-    print('done')
-    sf.write(voiceFileNameAndPath, wave.T, sr)
-
-
-if __name__ == '__main__':
-    audio_remove("d:\\document\\AI_Work\\whisper\\videos\\proxy\\RXXRguaHZs0.wav",
-                 "d:\\document\\AI_Work\\whisper\\videos\\proxy\\RXXRguaHZs0_voice.wav",
-                 "d:\\document\\AI_Work\\whisper\\videos\\proxy\\RXXRguaHZs0_instrument.wav")
