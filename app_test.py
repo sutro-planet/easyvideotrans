@@ -9,7 +9,7 @@ from app import url_rule_to_base
 from src.service.tts.edge_tts import EdgeTTSClient
 
 
-class PytvzhenUnitTest(unittest.TestCase):
+class EasyVideoTransUnitTest(unittest.TestCase):
 
     def test_video_url_rule_to_base_succeeds(self):
         assert url_rule_to_base("/videos/<video_id>") == "/videos"
@@ -46,7 +46,7 @@ class PytvzhenUnitTest(unittest.TestCase):
         assert EdgeTTSClient._run_convert_srt_to_voice_edge_coroutines(coroutines) == 2
 
 
-class PytvzhenAPITest(unittest.TestCase):
+class EasyVideoTransAPITest(unittest.TestCase):
 
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
