@@ -14,12 +14,12 @@ def client():
         yield client
 
 
-@patch("workloads.inference.os.path.exists", return_value=True)
-@patch("workloads.inference.os.path.getsize", return_value=1024)  # Mock file size
-@patch("workloads.inference.load_spectrogram", return_value=("mock_spectrogram", 44100))
+@patch("inference.os.path.exists", return_value=True)
+@patch("inference.os.path.getsize", return_value=1024)  # Mock file size
+@patch("inference.load_spectrogram", return_value=("mock_spectrogram", 44100))
 @patch.object(separator, "separate_tta", return_value=("mock_bg_spec", "mock_v_spec"))
 @patch("workloads.lib.spec_utils.spectrogram_to_wave", return_value=np.array([[0.1, 0.2], [0.3, 0.4]]))
-@patch("workloads.inference.sf.write")  # Mock sound file write function
+@patch("inference.sf.write")  # Mock sound file write function
 def test_audio_separation_success(mock_sf_write, mock_spec_to_wave, mock_separate, mock_load_spec, mock_getsize,
                                   mock_exists, client):
     """Test successful audio separation."""
@@ -40,7 +40,7 @@ def test_audio_separation_missing_file_path(client):
     assert "error" in data and "Invalid request" in data["error"]
 
 
-@patch("workloads.inference.os.path.exists", return_value=False)
+@patch("inference.os.path.exists", return_value=False)
 def test_audio_separation_file_not_found(mock_exists, client):
     """Test when the provided file path does not exist."""
     response = client.post("/audio-sep", json={"file_name": "invalid_path.wav"})
@@ -49,9 +49,9 @@ def test_audio_separation_file_not_found(mock_exists, client):
     assert "error" in data and "File not found" in data["error"]
 
 
-@patch("workloads.inference.os.path.exists", return_value=True)
-@patch("workloads.inference.os.path.getsize", return_value=100)
-@patch("workloads.inference.load_spectrogram", side_effect=Exception("Spectrogram error"))
+@patch("inference.os.path.exists", return_value=True)
+@patch("inference.os.path.getsize", return_value=100)
+@patch("inference.load_spectrogram", side_effect=Exception("Spectrogram error"))
 def test_audio_separation_internal_error(mock_load_spectrogram, mock_getsize, mock_exists, client):
     """Test when an internal error occurs during processing."""
     response = client.post("/audio-sep", json={"file_name": "audio.wav"})

@@ -27,7 +27,7 @@ class TestEasyVideoTransWorkloadClient(unittest.TestCase):
         mock_post.assert_called_once_with(
             "http://localhost:8199/audio-sep",
             json={"file_name": "test_audio.wav"},
-            timeout=120
+            timeout=180
         )
 
     @patch("requests.post")
@@ -70,7 +70,7 @@ class TestEasyVideoTransWorkloadClient(unittest.TestCase):
         mock_post.assert_called_once_with(
             "http://localhost:8199/audio-transcribe",
             json={"file_name": "test_audio.wav", "output_filenames": ["transcript.txt", "summary.txt"]},
-            timeout=60
+            timeout=180
         )
 
     @patch("requests.post")
