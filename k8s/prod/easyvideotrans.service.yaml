@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: easyvideotrans
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: easyvideotrans
+  labels:
+    kubernetes.io/service-name: easyvideotrans
+subsets:
+  - addresses:
+    - ip: 100.100.0.199 # CHANGE ME
+    ports:
+      - port: 8080

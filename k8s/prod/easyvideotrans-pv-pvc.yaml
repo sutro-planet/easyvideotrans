@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: easyvideotrans-output-pvc
+  namespace: easyvideotrans
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 200Gi
+  storageClassName: local-path
+  volumeMode: Filesystem
+  volumeName: easyvideotrans-output-pv
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: easyvideotrans-output-pv
+  namespace: easyvideotrans
+spec:
+  capacity:
+    storage: 200Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: local-path
+  local:
+    path: /mnt/easyvideotrans-ssd/root/k3smnt # CHANGE ME for a local path of your node
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - sutro-gpu1 # CHANGE ME to the name of your node

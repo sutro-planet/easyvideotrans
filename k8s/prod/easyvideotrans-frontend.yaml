@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: easyvideotrans-frontend
+  labels:
+    app: easyvideotrans-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: easyvideotrans-frontend
+  template:
+    metadata:
+      labels:
+        app: easyvideotrans-frontend
+    spec:
+      restartPolicy: Always
+      containers:
+      - name: easyvideotrans-frontend
+        image: hanfa/pytvzhen-frontend:latest
+        env:
+        - name: APP_ENV
+          value: "prod"
+        ports:
+        - containerPort: 3000
+          protocol: TCP
+        resources:
+          limits:
+            cpu: "4"
+            memory: "2Gi"
+          requests:
+            cpu: "2"
+            memory: "1Gi"
