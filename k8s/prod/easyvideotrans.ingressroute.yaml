@@ -1,0 +1,29 @@
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: easyvideotrans
+  namespace: easyvideotrans
+spec:
+  entryPoints:
+    - websecure
+  tls:
+    secretName: wildcard.deimos.cloud-tls
+  routes:
+  - match: ((Host(`easyvideotrans.com`) || Host(`www.easyvideotrans.com`)) && PathPrefix(`/api`)) # CHANGE ME
+    kind: Rule
+    services:
+    - name: easyvideotrans
+      port: 8080
+    middlewares:
+      - name: easyvideotrans-strip-api-prefix
+---
+# Prefixing with /api
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: easyvideotrans-strip-api-prefix
+spec:
+  stripPrefix:
+    prefixes:
+      - /api

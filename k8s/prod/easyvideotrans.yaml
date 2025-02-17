@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: easyvideotrans
+  namespace: easyvideotrans
+  labels:
+    app: easyvideotrans
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: easyvideotrans
+  template:
+    metadata:
+      labels:
+        app: easyvideotrans
+    spec:
+      restartPolicy: Always
+      hostNetwork: true
+      containers:
+      - name: easyvideotrans
+        image: hanfa/easyvideotrans:latest
+        env:
+        - name: CELERY_TASK_TIME_LIMIT
+          value: "7200"
+        - name: CELERY_TASK_SOFT_TIME_LIMIT
+          value: "3600"
+        - name: CELERY_METRICS_SERVER_PORT
+          value: "8081"
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        - containerPort: 8081
+          protocol: TCP
+        volumeMounts:
+        - name: easyvideotrans-output
+          mountPath: /app/output
+      - name: rabbit-mq
+        image: rabbitmq:3.13-management
+        ports:
+        - containerPort: 5672
+          protocol: TCP
+        - containerPort: 15672 # management UI
+          protocol: TCP
+        - containerPort: 15692 # prometheus metrics
+          protocol: TCP
+        volumeMounts:
+          - name: rabbitmq-plugins
+            mountPath: /etc/rabbitmq/enabled_plugins
+            subPath: enabled_plugins
+          - name: rabbitmq-config
+            mountPath: /etc/rabbitmq/rabbitmq.conf
+            subPath: rabbitmq.conf            
+      volumes:
+      - name: easyvideotrans-output
+        persistentVolumeClaim:
+          claimName: easyvideotrans-output-pvc
+      - name: rabbitmq-plugins
+        configMap:
+          name: rabbitmq-plugins-config
+      - name: rabbitmq-config
+        configMap:
+          name: rabbitmq-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rabbitmq-plugins-config
+  namespace: easyvideotrans
+data:
+  enabled_plugins: |
+    [rabbitmq_management,rabbitmq_prometheus].
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rabbitmq-config
+  namespace: easyvideotrans
+data:
+  rabbitmq.conf: |
+    consumer_timeout = 31622400000
