@@ -1,0 +1,17 @@
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: easyvideotrans-frontend
+  namespace: easyvideotrans
+spec:
+  entryPoints:
+    - websecure
+  tls:
+    secretName: wildcard.deimos.cloud-tls
+  routes:
+  - match: Host(`easyvideotrans.com`) || Host(`www.easyvideotrans.com`)
+    kind: Rule
+    services:
+    - name: easyvideotrans-frontend
+      port: 3000
