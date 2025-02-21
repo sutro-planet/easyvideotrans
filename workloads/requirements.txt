@@ -10,3 +10,5 @@ pytest
 srt==3.4.1
 srt-deepl==0.9.1
 faster-whisper==1.1.1
+einops==0.8.1
+vector-quantize-pytorch==1.21.8

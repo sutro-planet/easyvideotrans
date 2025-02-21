@@ -191,5 +191,10 @@ def audio_transcribe(file_path, output_filepaths):
         return jsonify({"error": "An error occurred during audio transcribe."}), 500
 
 
+@app.route("fish-tts", methods=["POST"])
+def fish_tts():
+    pass
+
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=8199)
