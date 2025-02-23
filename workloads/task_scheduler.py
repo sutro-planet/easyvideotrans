@@ -19,21 +19,6 @@ class Task:
     max_retry: int = 0
     current_retry: int = 0
 
-    @classmethod
-    def create(
-        cls, func: Callable, timeout: int, max_retry: int = 0, *args, **kwargs
-    ) -> "Task":
-        return cls(
-            id=str(uuid.uuid4()),
-            func=func,
-            args=args,
-            kwargs=kwargs,
-            timeout=timeout,
-            created_at=datetime.now(),
-            max_retry=max_retry,
-            current_retry=0,
-        )
-
 
 class TaskStatus(Enum):
     QUEUED = "QUEUED"
@@ -64,8 +49,22 @@ class TaskScheduler:
         self, func: Callable, timeout: int, max_retry: int = 0, *args, **kwargs
     ) -> str:
         """Add a task to the queue and return its ID"""
-        task = Task.create(func, timeout, max_retry, *args, **kwargs)
+        task = Task(
+            id=str(uuid.uuid4()),
+            func=func,
+            args=args,
+            kwargs=kwargs,
+            timeout=timeout,
+            created_at=datetime.now(),
+            max_retry=max_retry,
+            current_retry=0,
+        )
         self.task_queue.put(task)
+        self.task_results[task.id] = TaskResult(
+            task_id=task.id,
+            status=TaskStatus.QUEUED,
+            position=self.task_queue.qsize(),
+        )
         return task.id
 
     def start(self):
@@ -82,78 +81,86 @@ class TaskScheduler:
     def _process_tasks(self):
         """Main task processing loop"""
         while self.running:
-            if not self.task_queue.empty():
-                with self._lock:
-                    self.current_task = self.task_queue.get()
-                    if not self.current_task:
-                        continue
-
-                    position = self.task_queue.qsize()
-                    self.task_results[self.current_task.id] = TaskResult(
-                        task_id=self.current_task.id,
-                        status=TaskStatus.IN_PROGRESS,
-                        position=position,
-                    )
-
-                try:
-                    # Create a timer for timeout
-                    timer = threading.Timer(
-                        self.current_task.timeout,
-                        self._handle_timeout,
-                        args=[self.current_task.id],
-                    )
-                    timer.start()
-
-                    # Execute the task
-                    result = self.current_task.func(
-                        *self.current_task.args, **self.current_task.kwargs
-                    )
-
-                    # Cancel timer if task completed successfully
-                    timer.cancel()
-
-                    # Update task result
-                    self.task_results[self.current_task.id] = TaskResult(
-                        task_id=self.current_task.id,
-                        status=TaskStatus.FINISHED,
-                        output=result,
-                        position=0,
-                    )
-
-                except Exception as e:
-                    should_retry = (
-                        self.current_task.current_retry < self.current_task.max_retry
-                    )
-
-                    if should_retry:
-                        # Increment retry counter and requeue
-                        self.current_task.current_retry += 1
-                        print(
-                            f"Retrying task {self.current_task.id} (attempt {self.current_task.current_retry}/{self.current_task.max_retry})"
-                        )
-                        self.task_queue.put(self.current_task)
-
-                        self.task_results[self.current_task.id] = TaskResult(
-                            task_id=self.current_task.id,
-                            status=TaskStatus.QUEUED,
-                            output=f"Retry attempt {self.current_task.current_retry}",
-                            position=self.task_queue.qsize(),
-                        )
-                    else:
-                        self.task_results[self.current_task.id] = TaskResult(
-                            task_id=self.current_task.id,
-                            status=TaskStatus.FAILED,
-                            output=f"Failed after {self.current_task.current_retry} retries: {str(e)}",
-                            position=0,
-                        )
-                        print(
-                            f"Task {self.current_task.id} failed permanently: {str(e)}"
-                        )
-                finally:
+            try:
+                if not self.task_queue.empty():
                     with self._lock:
-                        self.current_task = None
+                        task = self.task_queue.get()
+                        self.current_task = task
+                        if not task:
+                            continue
 
-            time.sleep(0.3)
+                        position = self.task_queue.qsize()
+                        self.task_results[task.id] = TaskResult(
+                            task_id=task.id,
+                            status=TaskStatus.IN_PROGRESS,
+                            position=position,
+                        )
+
+                    try:
+                        # Create a timer for timeout
+                        timer = threading.Timer(
+                            task.timeout,
+                            self._handle_timeout,
+                            args=[task.id],
+                        )
+                        timer.start()
+
+                        # Execute the task
+                        result = task.func(*task.args, **task.kwargs)
+
+                        # Cancel timer if task completed successfully
+                        timer.cancel()
+
+                        # Update task result
+                        with self._lock:
+                            self.task_results[task.id] = TaskResult(
+                                task_id=task.id,
+                                status=TaskStatus.FINISHED,
+                                output=result,
+                                position=0,
+                            )
+
+                    except Exception as e:
+                        with self._lock:
+                            should_retry = task.current_retry < task.max_retry
+                            if should_retry:
+                                task.current_retry += 1
+                                print(
+                                    f"Retrying task {task.id} (attempt {task.current_retry}/{task.max_retry})"
+                                )
+                                self.task_queue.put(task)
+                                self.task_results[task.id] = TaskResult(
+                                    task_id=task.id,
+                                    status=TaskStatus.QUEUED,
+                                    output=f"Retry attempt {task.current_retry}",
+                                    position=self.task_queue.qsize(),
+                                )
+                            else:
+                                self.task_results[task.id] = TaskResult(
+                                    task_id=task.id,
+                                    status=TaskStatus.FAILED,
+                                    output=f"Failed after {task.current_retry} retries: {str(e)}",
+                                    position=0,
+                                )
+                                print(f"Task {task.id} failed permanently: {str(e)}")
+
+                    finally:
+                        with self._lock:
+                            if self.current_task and self.current_task.id == task.id:
+                                self.current_task = None
+
+            except Exception as e:
+                print(f"Error in task processing loop: {str(e)}")
+
+            time.sleep(0.1)
+
+    def reset(self):
+        """Reset the scheduler"""
+        with self._lock:
+            self.task_queue = Queue()
+            self.current_task = None
+            self.running = False
+            self.task_results = {}
 
     def _handle_timeout(self, task_id: str):
         """Handle task timeout"""

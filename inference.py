@@ -189,7 +189,7 @@ def perform_separation(file_path: str):
         CURRENT_INFERENCE.dec()
 
 
-@app.route("/audio-sep", methods=["POST"])
+@app.route("/audio_sep", methods=["POST"])
 @require_filename_points_to_existing_file
 def submit_audio_separation(file_path):
     """Submit audio separation task to the scheduler"""
@@ -211,7 +211,7 @@ def submit_audio_separation(file_path):
         return jsonify({"error": f"Failed to submit task: {str(e)}"}), 500
 
 
-@app.route("/audio-sep-status", methods=["GET"])
+@app.route("/audio_sep_status", methods=["GET"])
 def get_audio_separation_status():
     """Get the status of an audio separation task"""
     task_id = request.args.get("task_id")
@@ -272,7 +272,7 @@ def perform_audio_transcribe(file_path: str, output_filepaths: list):
         CURRENT_INFERENCE.dec()
 
 
-@app.route("/audio-transcribe", methods=["POST"])
+@app.route("/audio_transcribe", methods=["POST"])
 @require_filename_points_to_existing_file
 @require_output_filenames
 def audio_transcribe(file_path, output_filepaths):
@@ -300,7 +300,7 @@ def audio_transcribe(file_path, output_filepaths):
         return jsonify({"error": f"Failed to submit transcription task: {str(e)}"}), 500
 
 
-@app.route("/audio-transcribe-status", methods=["GET"])
+@app.route("/audio_transcribe_status", methods=["GET"])
 def get_audio_transcribe_status():
     """Get the status of an audio transcription task"""
     task_id = request.args.get("task_id")
