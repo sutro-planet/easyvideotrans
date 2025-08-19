@@ -1,9 +1,19 @@
 import pytest
 import numpy as np
+import sys
+from unittest.mock import patch, MagicMock
 
-from unittest.mock import patch
+# Mock the heavy dependencies before importing inference
+sys.modules['soundfile'] = MagicMock()
+sys.modules['librosa'] = MagicMock()
+sys.modules['torch'] = MagicMock()
+sys.modules['workloads.lib.separator'] = MagicMock()
+sys.modules['workloads.lib.spec_utils'] = MagicMock()
+sys.modules['workloads.lib.nets'] = MagicMock()
+sys.modules['workloads.lib.audio_processing.transcribe_audio'] = MagicMock()
+sys.modules['workloads.lib.srt'] = MagicMock()
 
-from inference import app, separator
+from inference import app  # noqa: E402
 
 
 @pytest.fixture
@@ -17,7 +27,7 @@ def client():
 @patch("inference.os.path.exists", return_value=True)
 @patch("inference.os.path.getsize", return_value=1024)  # Mock file size
 @patch("inference.load_spectrogram", return_value=("mock_spectrogram", 44100))
-@patch.object(separator, "separate_tta", return_value=("mock_bg_spec", "mock_v_spec"))
+@patch("inference.separator.separate_tta", return_value=("mock_bg_spec", "mock_v_spec"))
 @patch("workloads.lib.spec_utils.spectrogram_to_wave", return_value=np.array([[0.1, 0.2], [0.3, 0.4]]))
 @patch("inference.sf.write")  # Mock sound file write function
 def test_audio_separation_success(mock_sf_write, mock_spec_to_wave, mock_separate, mock_load_spec, mock_getsize,

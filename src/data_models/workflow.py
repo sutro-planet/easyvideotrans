@@ -24,8 +24,8 @@ class Workflow:
         self.srt_merge_translate_key = params_dict.get("srt merge translate key", "")   # 翻译工具的key
         self.srt_merge_zh_to_text = params_dict.get("srt merge zh to text", False)      # [工作流程开关]中文字幕转文字
         self.srt_to_voice_source = params_dict.get("srt to voice srouce", False)        # [工作流程开关]字幕转语音
-        self.TTS = params_dict.get("TTS", "edge")           # [工作流程开关]合成语音，目前支持edge和GPT-SoVITS
-        self.TTS_param = params_dict.get("TTS param", "")   # TTS参数，GPT-SoVITS为地址，edge为角色。edge模式下可以不填，建议不要用GPT-SoVITS。
+        self.TTS = params_dict.get("TTS", "edge")           # [工作流程开关]合成语音，目前支持edge、openai和GPT-SoVITS
+        self.TTS_param = params_dict.get("TTS param", "")   # TTS参数，GPT-SoVITS为地址，edge为角色，openai为语音配置(JSON格式)。edge模式下可以不填，建议不要用GPT-SoVITS。
         self.voice_connect = params_dict.get("voice connect", False)                    # [工作流程开关]语音合并
         self.audio_zh_transcribe = params_dict.get("audio zh transcribe", False)        # [工作流程开关]合成后的语音转文字
         self.audio_zh_transcribe_model = params_dict.get("audio zh transcribe model", "medium")     # 中文语音转文字模型名称

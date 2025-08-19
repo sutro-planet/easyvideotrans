@@ -29,6 +29,16 @@ pytvzhen_api_request_counter = metrics.counter(
             'method': lambda: request.method, 'status': lambda r: r.status_code}
 )
 
+tts_request_counter = metrics.counter(
+    'tts_request_counter', 'TTS request count by vendor',
+    labels={'vendor': lambda: getattr(request, '_tts_vendor', 'unknown'), 'stage': lambda: pytvzhen_stage()}
+)
+
+tts_duration_histogram = metrics.histogram(
+    'tts_duration_seconds', 'TTS processing duration in seconds',
+    labels={'vendor': lambda: getattr(request, '_tts_vendor', 'unknown'), 'stage': lambda: pytvzhen_stage()}
+)
+
 # Setup workloads client to submit any GPU workloads to EasyVideoTrans compute backend
 gpu_workload = EasyVideoTransWorkloadClient(
     audio_separation_endpoint=app.config['VOICE_BACKGROUND_SEPARATION_ENDPOINT'],
@@ -526,8 +536,14 @@ def voice_connect_serve(video_id):
 
 @app.route('/tts', methods=['POST'])
 @pytvzhen_api_request_counter
+@tts_request_counter
+@tts_duration_histogram
 @require_video_id_from_post_request
 def tts(video_id):
+    import time
+    import json
+
+    start_time = time.time()
     output_path = app.config['OUTPUT_PATH']
 
     data = request.get_json()
@@ -535,7 +551,14 @@ def tts(video_id):
     srt_fn = f'{video_id}_zh_merged.srt'
     srt_path = os.path.join(output_path, srt_fn)
     tts_dir = os.path.join(output_path, video_id + "_zh_source")
-    character = data['tts_character']
+
+    # Get TTS configuration
+    tts_vendor = data.get('tts_vendor', 'edge')  # Default to edge for backward compatibility
+    character = data.get('tts_character', '')
+    tts_params = data.get('tts_params', {})
+
+    # Set vendor for metrics
+    request._tts_vendor = tts_vendor
 
     if not os.path.exists(srt_path):
         return jsonify({"message": log_warning_return_str(
@@ -546,11 +569,30 @@ def tts(video_id):
         shutil.rmtree(tts_dir)
 
     try:
-        tts_client = get_tts_client("edge", character)
+        if tts_vendor == 'edge':
+            tts_client = get_tts_client("edge", character)
+        elif tts_vendor == 'openai':
+            # Parse OpenAI parameters
+            if isinstance(tts_params, str):
+                try:
+                    tts_params = json.loads(tts_params) if tts_params else {}
+                except json.JSONDecodeError:
+                    tts_params = {}
+
+            voice = character or tts_params.get('voice', 'alloy')
+            model = tts_params.get('model', 'tts-1')
+            instructions = tts_params.get('instructions', None)
+
+            tts_client = get_tts_client("openai", voice=voice, model=model, instructions=instructions)
+        else:
+            return jsonify({"message": log_warning_return_str(f"Unsupported TTS vendor: {tts_vendor}")}), 400
+
         tts_client.srt_to_voice(srt_path, tts_dir)
+
+        duration = time.time() - start_time
         return jsonify({"message": log_info_return_str(
-            "tts success."),
-            "video_id": video_id}), 200
+            f"TTS success using {tts_vendor} (took {duration:.2f}s)."),
+            "video_id": video_id, "duration": duration}), 200
     except Exception as e:
         exception = e
 
@@ -669,6 +711,75 @@ def video_preview_serve(video_id):
 
     return jsonify({"message": log_warning_return_str(
         f'Video preview {video_preview_fn} not found at {video_preview_path}')}), 404
+
+
+@app.route('/subtitles/<video_id>', methods=['GET'])
+@pytvzhen_api_request_counter
+def download_subtitles(video_id):
+    """Download Chinese translated SRT file for editing"""
+    output_path = app.config['OUTPUT_PATH']
+
+    # Look for the Chinese merged SRT file
+    srt_fn = f'{video_id}_zh_merged.srt'
+    srt_path = os.path.join(output_path, srt_fn)
+
+    if not os.path.exists(srt_path):
+        return jsonify({"message": log_warning_return_str(
+            f'Chinese SRT {srt_fn} not found at {output_path}')}), 404
+
+    try:
+        with open(srt_path, 'r', encoding='utf-8') as file:
+            content = file.read()
+
+        return content, 200, {
+            'Content-Type': 'text/plain; charset=utf-8',
+            'Content-Disposition': f'attachment; filename="{srt_fn}"'
+        }
+    except Exception as e:
+        return jsonify({"message": log_warning_return_str(
+            f"Failed to read subtitle file: {str(e)}")}), 500
+
+
+@app.route('/subtitles/<video_id>', methods=['POST'])
+@pytvzhen_api_request_counter
+def upload_subtitles(video_id):
+    """Upload modified Chinese SRT file"""
+    output_path = app.config['OUTPUT_PATH']
+
+    data = request.get_json()
+    if not data or 'content' not in data:
+        return jsonify({"message": log_warning_return_str(
+            "No subtitle content provided")}), 400
+
+    content = data['content']
+
+    # Validate SRT content (basic check)
+    if not content.strip():
+        return jsonify({"message": log_warning_return_str(
+            "Subtitle content cannot be empty")}), 400
+
+    # Save to the Chinese merged SRT file
+    srt_fn = f'{video_id}_zh_merged.srt'
+    srt_path = os.path.join(output_path, srt_fn)
+
+    try:
+        # Create backup of original file
+        if os.path.exists(srt_path):
+            backup_path = srt_path + '.backup'
+            shutil.copy2(srt_path, backup_path)
+
+        # Write the new content
+        with open(srt_path, 'w', encoding='utf-8') as file:
+            file.write(content)
+
+        return jsonify({
+            "message": log_info_return_str(f"Subtitle file {srt_fn} updated successfully"),
+            "video_id": video_id
+        }), 200
+
+    except Exception as e:
+        return jsonify({"message": log_warning_return_str(
+            f"Failed to save subtitle file: {str(e)}")}), 500
 
 
 if __name__ == '__main__':

@@ -14,17 +14,39 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 
-COPY workloads/requirements.txt /app/
+# Copy workloads project files
+COPY workloads/pyproject.toml workloads/uv.lock /app/workloads/
+WORKDIR /app/workloads
 
-RUN pip install --no-cache-dir -r requirements.txt
+# Install workload dependencies with uv (excluding PyTorch to use system version)
+RUN uv sync --frozen --no-dev --no-install-project && \
+    /app/workloads/.venv/bin/python --version && \
+    python -c "import torch; print('System PyTorch version:', torch.__version__); print('CUDA available:', torch.cuda.is_available())" && \
+    /app/workloads/.venv/bin/python -c "import soundfile as sf; print('soundfile version:', sf.__version__)" && \
+    /app/workloads/.venv/bin/python -c "import ctranslate2; print('ctranslate2 version:', ctranslate2.__version__)" && \
+    echo "Checking CUDA library availability..." && \
+    ls -la /opt/conda/lib/python3.11/site-packages/nvidia/ || echo "NVIDIA packages not found in expected location" && \
+    echo "Checking system CUDA libraries..." && \
+    find /usr -name "*cudnn*" -type f 2>/dev/null | head -10 || echo "System cuDNN not found" && \
+    find /opt/conda -name "*cudnn*" -type f 2>/dev/null | head -10 || echo "Conda cuDNN not found"
 
+# Copy application files
+WORKDIR /app
 COPY workloads /app/workloads/
 COPY src /app/src/
 COPY inference.py /app
 
-ENV LD_LIBRARY_PATH /opt/conda/lib/python3.11/site-packages/nvidia/cudnn/lib
+# Place executables in the environment at the front of the path
+ENV PATH="/app/workloads/.venv/bin:$PATH"
+# Include both app and system packages in Python path
+ENV PYTHONPATH="/app:/opt/conda/lib/python3.11/site-packages:$PYTHONPATH"
+# Set LD_LIBRARY_PATH for CUDA libraries (needed by ctranslate2)
+ENV LD_LIBRARY_PATH="/opt/conda/lib/python3.11/site-packages/nvidia/cublas/lib:/opt/conda/lib/python3.11/site-packages/nvidia/cudnn/lib:/opt/conda/lib/python3.11/site-packages/nvidia/cufft/lib:/opt/conda/lib/python3.11/site-packages/nvidia/curand/lib:/opt/conda/lib/python3.11/site-packages/nvidia/cusolver/lib:/opt/conda/lib/python3.11/site-packages/nvidia/cusparse/lib:/opt/conda/lib/python3.11/site-packages/nvidia/nccl/lib:/opt/conda/lib/python3.11/site-packages/nvidia/nvtx/lib:$LD_LIBRARY_PATH"
 
 EXPOSE 8188
 
+# Run directly using Python in PATH
 CMD ["python", "inference.py"]

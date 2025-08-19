@@ -17,6 +17,6 @@ metadata:
     kubernetes.io/service-name: easyvideotrans
 subsets:
   - addresses:
-    - ip: 100.100.0.199 # CHANGE ME
+    - ip: 100.100.0.99 # CHANGE ME
     ports:
       - port: 8080

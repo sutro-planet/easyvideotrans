@@ -11,3 +11,8 @@ resources:
   - easyvideotrans.namespace.yaml
   - easyvideotrans.service.yaml
   - easyvideotrans.yaml
+
+secretGenerator:
+  - name: easyvideotrans-secrets
+    files:
+      - openai-api-key=secrets/open-ai.key

@@ -33,4 +33,4 @@ spec:
         - key: kubernetes.io/hostname
           operator: In
           values:
-          - sutro-gpu1 # CHANGE ME to the name of your node
+          - sutro-gpu0 # CHANGE ME to the name of your node
