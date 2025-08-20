@@ -18,6 +18,7 @@ spec:
       containers:
       - name: easyvideotrans-frontend
         image: hanfa/pytvzhen-frontend:latest
+        imagePullPolicy: Always
         env:
         - name: APP_ENV
           value: "prod"

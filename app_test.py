@@ -7,6 +7,8 @@ from app import app
 from app import url_rule_to_base
 
 from src.service.tts.edge_tts import EdgeTTSClient
+from src.service.tts.openai_tts import OpenAITTSClient
+from src.service.tts import get_tts_client
 
 
 class EasyVideoTransUnitTest(unittest.TestCase):
@@ -44,6 +46,37 @@ class EasyVideoTransUnitTest(unittest.TestCase):
         coroutines = [self.success_coroutine(1), self.success_coroutine(2), self.exception_coroutine(3),
                       self.success_coroutine(4), self.success_coroutine(5)]
         assert EdgeTTSClient._run_convert_srt_to_voice_edge_coroutines(coroutines) == 2
+
+    def test_tts_client_factory_edge(self):
+        client = get_tts_client("edge", character="zh-CN-XiaoyiNeural")
+        assert isinstance(client, EdgeTTSClient)
+        assert client.character == "zh-CN-XiaoyiNeural"
+
+    def test_tts_client_factory_openai(self):
+        # Mock the OpenAI client to avoid requiring API key during test
+        import unittest.mock
+        with unittest.mock.patch('src.service.tts.openai_tts.OpenAI'), \
+             unittest.mock.patch('src.service.tts.openai_tts.os.environ.get', return_value='fake-api-key'):
+            client = get_tts_client("openai", voice="alloy", model="tts-1")
+            assert isinstance(client, OpenAITTSClient)
+            assert client.voice == "alloy"
+            assert client.model == "tts-1"
+
+    def test_tts_client_factory_openai_with_character(self):
+        # Test that character parameter maps to voice for OpenAI
+        import unittest.mock
+        with unittest.mock.patch('src.service.tts.openai_tts.OpenAI'), \
+             unittest.mock.patch('src.service.tts.openai_tts.os.environ.get', return_value='fake-api-key'):
+            client = get_tts_client("openai", character="nova")
+            assert isinstance(client, OpenAITTSClient)
+            assert client.voice == "nova"
+
+    def test_tts_client_factory_unknown_vendor(self):
+        try:
+            get_tts_client("unknown_vendor")
+            assert False, "Should have raised ValueError"
+        except ValueError as e:
+            assert "Unknown TTS vendor" in str(e)
 
 
 class EasyVideoTransAPITest(unittest.TestCase):

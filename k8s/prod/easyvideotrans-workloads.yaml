@@ -28,6 +28,8 @@ spec:
       hostNetwork: true
       containers:
         - name: easyvideotrans-workloads
+          image: docker.io/hanfa/easyvideotrans-workloads:latest
+          imagePullPolicy: Always
           resources:
             requests:
               nvidia.com/gpu: 1 # EasyVideoTrans workloads requires at least 1 GPU
@@ -37,7 +39,6 @@ spec:
               nvidia.com/gpu: 1
               cpu: "4"     # Maximum CPU allowed (4 cores)
               memory: "25Gi"  # Maximum memory allowed
-          image: docker.io/hanfa/easyvideotrans-workloads:latest
           ports:
             - containerPort: 8188
           envFrom:

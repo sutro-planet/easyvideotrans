@@ -20,6 +20,7 @@ spec:
       containers:
       - name: easyvideotrans
         image: hanfa/easyvideotrans:latest
+        imagePullPolicy: Always
         env:
         - name: CELERY_TASK_TIME_LIMIT
           value: "7200"
@@ -27,6 +28,11 @@ spec:
           value: "3600"
         - name: CELERY_METRICS_SERVER_PORT
           value: "8081"
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: easyvideotrans-secrets
+              key: openai-api-key
         ports:
         - containerPort: 8080
           protocol: TCP
@@ -37,6 +43,7 @@ spec:
           mountPath: /app/output
       - name: rabbit-mq
         image: rabbitmq:3.13-management
+        imagePullPolicy: Always
         ports:
         - containerPort: 5672
           protocol: TCP

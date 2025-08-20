@@ -1,5 +1,5 @@
-# Use an official NVIDIA runtime with CUDA and Miniconda as a parent image
-FROM python:3.9-slim AS base
+# Use an official Python runtime as a parent image
+FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
@@ -10,24 +10,26 @@ ENV TZ=America/New_York \
 
 RUN apt-get update && apt-get install ffmpeg supervisor git -y
 
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
+
 # Set the working directory in the container to /app
 WORKDIR /app
 
-# Copy only the requirements file to leverage Docker cache
-COPY requirements.txt .
+# Copy pyproject.toml and uv.lock to leverage Docker cache
+COPY pyproject.toml uv.lock ./
 
-# Install dependencies
-RUN pip install --upgrade pip
-RUN pip install --default-timeout=200 -r requirements.txt
-
-
-FROM base AS final
+# Install dependencies with uv
+RUN uv sync --frozen --no-dev && /app/.venv/bin/python --version
 
 # Add the current directory contents into the container at /app
 COPY . /app
 
 # Copy the supervisord configuration file
 COPY configs/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Place executables in the environment at the front of the path
+ENV PATH="/app/.venv/bin:$PATH"
 
 # Set environment variables to configure Celery
 ENV CELERY_BROKER_DOMAIN localhost
@@ -48,4 +50,5 @@ ARG PYTVZHEN_STAGE=beta
 ENV PYTVZHEN_STAGE ${PYTVZHEN_STAGE}
 
 # Run supervisord to start both Flask and Celery
+# Note: supervisord.conf should use uv run commands for Python processes
 CMD ["/usr/bin/supervisord"]
