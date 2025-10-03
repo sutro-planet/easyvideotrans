@@ -18,6 +18,8 @@
     "srt to voice srouce": true,
     "TTS": "edge",
     "TTS param": "",
+    "voice volume": 1.0,
+    "background music volume": 0.5,
     "voice connect": true,
     "audio zh transcribe": true,
     "audio zh transcribe model": "medium",

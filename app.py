@@ -485,6 +485,7 @@ def voice_connect(video_id):
 
     data = request.get_json()
     video_id = data['video_id']
+    voice_volume = data.get('voice_volume', 1.0)  # 获取语音音量参数，默认为1.0
     voiceDir = os.path.join(output_path, video_id + "_zh_source")
     voice_connect_fn = video_id + "_zh.wav"
     voice_connect_path = os.path.join(output_path, voice_connect_fn)
@@ -495,7 +496,7 @@ def voice_connect(video_id):
         return jsonify({"message": log_warning_return_str(
             f'Voice directory {voiceDir} not found at {output_path}')}), 404
 
-    ret = connect_voice(app.logger, voiceDir, voice_connect_path, warning_log_path)
+    ret = connect_voice(app.logger, voiceDir, voice_connect_path, warning_log_path, voice_volume)
     if ret:
         return jsonify({"message": log_info_return_str(
             f"Voice connect {voice_connect_fn} successfully."),
@@ -630,6 +631,8 @@ def video_preview(video_id):
 
     data = request.get_json()
     video_id = data['video_id']
+    voice_volume = data.get('voice_volume', 1.0)  # 获取语音音量参数，默认为1.0
+    background_music_volume = data.get('background_music_volume', 0.5)  # 获取背景音乐音量参数，默认为0.5
     voice_connect_path = os.path.join(output_path, video_id + "_zh.wav")
     audio_bg_path = os.path.join(output_path, f'{video_id}_bg.wav')
     video_save_path = os.path.join(output_path, f"{video_id}.mp4")
@@ -657,11 +660,11 @@ def video_preview(video_id):
     # 生成视频预览
     if blocking:
         video_preview_task.apply_async(
-            args=(video_source_path, voice_connect_path, audio_bg_path, video_out_path)).get()
+            args=(video_source_path, voice_connect_path, audio_bg_path, video_out_path, voice_volume, background_music_volume)).get()
         return jsonify({"message": log_info_return_str(
             f"Video preview {video_id} successfully rendered.")}), 200
 
-    task = video_preview_task.delay(video_source_path, voice_connect_path, audio_bg_path, video_out_path)
+    task = video_preview_task.delay(video_source_path, voice_connect_path, audio_bg_path, video_out_path, voice_volume, background_music_volume)
 
     queue_length = get_queue_length('video_preview')
     return jsonify({

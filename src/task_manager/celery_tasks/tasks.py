@@ -18,14 +18,14 @@ VIDEO_PREVIEW_TASK_DURATION = Histogram(
 
 
 @celery_app.task(bind=True)
-def video_preview_task(self, video_path, voice_path, audio_bg_path, video_out_path):
+def video_preview_task(self, video_path, voice_path, audio_bg_path, video_out_path, voice_volume=1.0, background_music_volume=0.5):
     print(f"Invoke video preview task {self.request.id}.")
     VIDEO_PREVIEW_TASK_INVOKED.inc()
     start_time = time.time()
 
     try:
         _ = zhVideoPreview(None, video_path, voice_path, audio_bg_path,
-                           "暂时没有处理字幕文件，所以随便写", video_out_path)
+                           "暂时没有处理字幕文件，所以随便写", video_out_path, voice_volume, background_music_volume)
     except SoftTimeLimitExceeded as soft_exception:
         VIDEO_PREVIEW_TASK_SOFT_TIMEOUT.inc()
         print(f"Invoke video preview task {self.request.id} failed with soft timeout: {soft_exception}")
