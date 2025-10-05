@@ -26,6 +26,8 @@ class Workflow:
         self.srt_to_voice_source = params_dict.get("srt to voice srouce", False)        # [工作流程开关]字幕转语音
         self.TTS = params_dict.get("TTS", "edge")           # [工作流程开关]合成语音，目前支持edge、openai和GPT-SoVITS
         self.TTS_param = params_dict.get("TTS param", "")   # TTS参数，GPT-SoVITS为地址，edge为角色，openai为语音配置(JSON格式)。edge模式下可以不填，建议不要用GPT-SoVITS。
+        self.voice_volume = params_dict.get("voice volume", 1.0)                        # TTS语音音量调整，1.0为原音量，0.5为降低50%
+        self.background_music_volume = params_dict.get("background music volume", 0.5)  # 背景音乐音量调整，0.5为降低50%
         self.voice_connect = params_dict.get("voice connect", False)                    # [工作流程开关]语音合并
         self.audio_zh_transcribe = params_dict.get("audio zh transcribe", False)        # [工作流程开关]合成后的语音转文字
         self.audio_zh_transcribe_model = params_dict.get("audio zh transcribe model", "medium")     # 中文语音转文字模型名称
@@ -42,6 +44,7 @@ class Workflow:
             f"srt_merge_translate={self.srt_merge_translate}, srt_merge_translate_tool={self.srt_merge_translate_tool}, "
             f"srt_merge_translate_key={self.srt_merge_translate_key}, srt_merge_zh_to_text={self.srt_merge_zh_to_text}, "
             f"srt_to_voice_source={self.srt_to_voice_source}, TTS={self.TTS}, TTS_param={self.TTS_param}, "
+            f"voice_volume={self.voice_volume}, background_music_volume={self.background_music_volume}, "
             f"voice_connect={self.voice_connect}, audio_zh_transcribe={self.audio_zh_transcribe}, "
             f"audio_zh_transcribe_model={self.audio_zh_transcribe_model}, video_zh_preview={self.video_zh_preview})"
         )
@@ -77,6 +80,8 @@ class Workflow:
             "srt to voice srouce": self.srt_to_voice_source,
             "TTS": self.TTS,
             "TTS param": self.TTS_param,
+            "voice volume": self.voice_volume,
+            "background music volume": self.background_music_volume,
             "voice connect": self.voice_connect,
             "audio zh transcribe": self.audio_zh_transcribe,
             "audio zh transcribe model": self.audio_zh_transcribe_model,

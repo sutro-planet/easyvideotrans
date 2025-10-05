@@ -1,11 +1,12 @@
 import os
 import srt
 import datetime
+from math import log10
 from pydub import AudioSegment
 from src.utils.log_util import WarningFile
 
 
-def connect_voice(logger, sourceDir, outputAndPath, warningFilePath):
+def connect_voice(logger, sourceDir, outputAndPath, warningFilePath, voice_volume=1.0):
     MAX_SPEED_UP = 1.2  # 最大音频加速
     MIN_SPEED_UP = 1.05  # 最小音频加速
     MIN_GAP_DURATION = 0.1  # 最小间隔时间，单位秒。低于这个间隔时间就认为音频重叠了
@@ -60,6 +61,10 @@ def connect_voice(logger, sourceDir, outputAndPath, warningFilePath):
                     diagnosisLog.write(logStr)
                     speedUp = MIN_SPEED_UP
                 audio = audio.speedup(playback_speed=speedUp)
+
+        # 应用音量调整
+        if voice_volume != 1.0:
+            audio = audio + (20 * log10(voice_volume))  # 使用分贝调整音量
 
         combined = combined.overlay(audio, position=audio_position)
 
