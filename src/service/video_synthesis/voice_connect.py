@@ -65,7 +65,7 @@ def connect_voice(logger, sourceDir, outputAndPath, warningFilePath, voice_volum
         # 应用音量调整
         if voice_volume != 1.0:
             audio = audio + (20 * log10(voice_volume))  # 使用分贝调整音量
-        
+
         combined = combined.overlay(audio, position=audio_position)
 
     combined.export(outputAndPath, format="wav")
