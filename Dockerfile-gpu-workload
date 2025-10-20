@@ -46,7 +46,7 @@ ENV PYTHONPATH="/app:/opt/conda/lib/python3.11/site-packages:$PYTHONPATH"
 # Set LD_LIBRARY_PATH for CUDA libraries (needed by ctranslate2)
 ENV LD_LIBRARY_PATH="/opt/conda/lib/python3.11/site-packages/nvidia/cublas/lib:/opt/conda/lib/python3.11/site-packages/nvidia/cudnn/lib:/opt/conda/lib/python3.11/site-packages/nvidia/cufft/lib:/opt/conda/lib/python3.11/site-packages/nvidia/curand/lib:/opt/conda/lib/python3.11/site-packages/nvidia/cusolver/lib:/opt/conda/lib/python3.11/site-packages/nvidia/cusparse/lib:/opt/conda/lib/python3.11/site-packages/nvidia/nccl/lib:/opt/conda/lib/python3.11/site-packages/nvidia/nvtx/lib:$LD_LIBRARY_PATH"
 
-EXPOSE 8188
+EXPOSE 8199
 
 # Run directly using Python in PATH
 CMD ["python", "inference.py"]

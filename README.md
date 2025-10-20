@@ -143,7 +143,7 @@ services:
       - APP_ENV=production
       - OUTPUT_DIR=/app/static/outputs
     ports:
-      - "8188:8188"
+      - "8199:8199"
     deploy:
       resources:
         limits:
