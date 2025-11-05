@@ -30,3 +30,4 @@ jobs:
           context: .
           push: true
           tags: hanfa/easyvideotrans:latest
+          platforms: linux/amd64,linux/arm64

@@ -31,3 +31,4 @@ jobs:
           file: Dockerfile-gpu-workload
           push: true
           tags: hanfa/easyvideotrans-workloads:latest
+          platforms: linux/amd64,linux/arm64
